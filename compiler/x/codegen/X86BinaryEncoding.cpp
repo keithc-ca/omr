@@ -890,7 +890,7 @@ TR::X86ImmInstruction::addMetaDataForCodeAddress(uint8_t *cursor)
                if (cg()->comp()->getOption(TR_UseSymbolValidationManager))
                   {
                   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                                                                            (uint8_t *)getSourceImmediate(),
+                                                                                            (uint8_t *)(uintptr_t)getSourceImmediate(),
                                                                                             (uint8_t *)symbolKind,
                                                                                             TR_SymbolFromManager,
                                                                                             cg()),
@@ -1135,7 +1135,7 @@ TR::X86ImmSymInstruction::addMetaDataForCodeAddress(uint8_t *cursor)
                if (cg()->comp()->getOption(TR_UseSymbolValidationManager))
                   {
                   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                                                                            (uint8_t *)getSourceImmediate(),
+                                                                                            (uint8_t *)(uintptr_t)getSourceImmediate(),
                                                                                             (uint8_t *)TR::SymbolType::typeClass,
                                                                                             TR_SymbolFromManager,
                                                                                             cg()),
@@ -1563,7 +1563,7 @@ TR::X86RegImmInstruction::addMetaDataForCodeAddress(uint8_t *cursor)
             if (cg()->comp()->getOption(TR_UseSymbolValidationManager))
                {
                cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                                                                         (uint8_t *)getSourceImmediate(),
+                                                                                         (uint8_t *)(uintptr_t)getSourceImmediate(),
                                                                                          (uint8_t *)symbolKind,
                                                                                          TR_SymbolFromManager,
                                                                                          cg()),
@@ -1688,7 +1688,7 @@ TR::X86RegImmSymInstruction::addMetaDataForCodeAddress(uint8_t *cursor)
             if (cg()->comp()->getOption(TR_UseSymbolValidationManager))
                {
                cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                                                                         (uint8_t *)getSourceImmediate(),
+                                                                                         (uint8_t *)(uintptr_t)getSourceImmediate(),
                                                                                          (uint8_t *)TR::SymbolType::typeClass,
                                                                                          TR_SymbolFromManager,
                                                                                          cg()),
@@ -1731,7 +1731,7 @@ TR::X86RegImmSymInstruction::addMetaDataForCodeAddress(uint8_t *cursor)
          if (cg()->comp()->getOption(TR_UseSymbolValidationManager))
             {
             cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                                                                      (uint8_t *)getSourceImmediate(),
+                                                                                      (uint8_t *)(uintptr_t)getSourceImmediate(),
                                                                                       (uint8_t *)symbolKind,
                                                                                       TR_SymbolFromManager,
                                                                                       cg()),
@@ -1983,7 +1983,7 @@ TR::X86MemImmInstruction::addMetaDataForCodeAddress(uint8_t *cursor)
          if (cg()->comp()->getOption(TR_UseSymbolValidationManager))
             {
             cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                                                                      (uint8_t *)getSourceImmediate(),
+                                                                                      (uint8_t *)(uintptr_t)getSourceImmediate(),
                                                                                       (uint8_t *)TR::SymbolType::typeClass,
                                                                                       TR_SymbolFromManager,
                                                                                       cg()),
@@ -2145,7 +2145,7 @@ TR::X86MemImmSymInstruction::addMetaDataForCodeAddress(uint8_t *cursor)
          if (cg()->comp()->getOption(TR_UseSymbolValidationManager))
             {
             cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                                                                      (uint8_t *)getSourceImmediate(),
+                                                                                      (uint8_t *)(uintptr_t)getSourceImmediate(),
                                                                                       (uint8_t *)TR::SymbolType::typeClass,
                                                                                       TR_SymbolFromManager,
                                                                                       cg()),
@@ -2690,7 +2690,7 @@ TR::AMD64RegImm64Instruction::addMetaDataForCodeAddress(uint8_t *cursor)
                   {
                   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
                                                                    (uint8_t *)methodSymRef,
-                                                                   (uint8_t *)getNode()->getInlinedSiteIndex(),
+                                                                   (uint8_t *)(uintptr_t)getNode()->getInlinedSiteIndex(),
                                                                    TR_ClassAddress,
                                                                    cg()),
                                     __FILE__,__LINE__, getNode());

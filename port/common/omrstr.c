@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,6 +28,7 @@
 
 #include "omrportasserts.h"
 
+#include <ctype.h>
 #include <stdarg.h>
 #include <string.h>
 #if defined(OMR_OS_WINDOWS)
@@ -1759,7 +1760,7 @@ populateWithDefaultTokens(struct OMRPortLibrary *portLibrary, struct J9StringTok
 #define JOBNAME_BUF_LEN 128
 #define JOBID_BUF_LEN 16
 #define ASID_BUF_LEN 16
-	uintptr_t pid;
+	uintptr_t pid = 0;
 	char username[USERNAME_BUF_LEN];
 	char jobname[JOBNAME_BUF_LEN];
 	char jobid[JOBID_BUF_LEN];
@@ -1791,7 +1792,21 @@ populateWithDefaultTokens(struct OMRPortLibrary *portLibrary, struct J9StringTok
 	/* Let's add the username, note that this is done seperately since it
 	 * may fail on some platforms, but in that event, we just don't add it */
 	if (0 == portLibrary->sysinfo_get_username(portLibrary, username, USERNAME_BUF_LEN)) {
+		size_t username_length = strlen(username);
+		size_t index = 0;
+		char username_upper[USERNAME_BUF_LEN];
+		char username_lower[USERNAME_BUF_LEN];
+
+		for (index = 0; index < username_length; ++index) {
+			username_upper[index] = toupper(username[index]);
+			username_lower[index] = tolower(username[index]);
+		}
+		username_upper[username_length] = '\0';
+		username_lower[username_length] = '\0';
+
 		portLibrary->str_set_token(portLibrary, tokens, "uid", "%s", username);
+		portLibrary->str_set_token(portLibrary, tokens, "USERID", "%s", username_upper);
+		portLibrary->str_set_token(portLibrary, tokens, "userid", "%s", username_lower);
 	}
 
 	return 0;
@@ -1946,23 +1961,25 @@ omrstr_set_time_tokens(struct OMRPortLibrary *portLibrary, struct J9StringTokens
  *
  * The default tokens always include:
  *
- * 	  %Y     year    1970..????
- *	  %y     year of century  00..99
- *	  %m     month     01..12
- *	  %b     abbreviated month name in english
- *	  %d     day       01..31
- *	  %H     hour      00..23
- *	  %M     minute    00..59
- *	  %S     second    00..59
+ *    %Y      year      1970..????
+ *    %y      year of century  00..99
+ *    %m      month     01..12
+ *    %b      abbreviated month name in english
+ *    %d      day       01..31
+ *    %H      hour      00..23
+ *    %M      minute    00..59
+ *    %S      second    00..59
  *
- *	  %tick  high res timer
+ *    %tick   high res timer
  *
- *	  %pid   process id
+ *    %pid    process id
  *
- *	  %uid   user name
+ *    %uid    user name
+ *    %USERID user name (uppercase)
+ *    %userid user name (lowercase)
  *
  * Some platforms may include additional tokens. In particular:
- *	  %job   job name	(z/OS only)
+ *    %job    job name   (z/OS only)
 
  * @parm[in]     portLib  the port library
  * @parm[in]     timeMillis  the UTC time in ms to use for the date/time tokens. This value must be greater than or equal to zero.

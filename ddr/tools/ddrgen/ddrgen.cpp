@@ -25,6 +25,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <queue>
 #include <vector>
 
 #if defined(J9ZOS390) && !defined(OMR_EBCDIC)
@@ -44,6 +45,7 @@
 #include "ddr/scanner/Scanner.hpp"
 #include "ddr/ir/Symbol_IR.hpp"
 #include "ddr/ir/TextFile.hpp"
+#include "ddr/ir/UnionUDT.hpp"
 
 struct Options
 {
@@ -72,6 +74,57 @@ struct Options
 
 private:
 	DDR_RC readFileList(OMRPortLibrary *portLibrary, const char *listFileName, vector<string> *fileNameList);
+};
+
+class SizeChecker
+{
+private:
+	class ProblemReporter : public TypeVisitor
+	{
+	private:
+		OMRPortLibrary * const portLibrary;
+
+	public:
+		explicit ProblemReporter(OMRPortLibrary *portLibrary) : portLibrary(portLibrary) {}
+
+		virtual DDR_RC visitType(Type *type) const;
+		virtual DDR_RC visitClass(ClassUDT *type) const;
+		virtual DDR_RC visitEnum(EnumUDT *type) const;
+		virtual DDR_RC visitNamespace(NamespaceUDT *type) const;
+		virtual DDR_RC visitTypedef(TypedefUDT *type) const;
+		virtual DDR_RC visitUnion(UnionUDT *type) const;
+	};
+
+	class ReferenceVisitor : public TypeVisitor
+	{
+	private:
+		SizeChecker * const checker;
+
+		void addReference(Type *type) const;
+		void visitFields(const vector<Field *> &fields) const;
+
+	public:
+		explicit ReferenceVisitor(SizeChecker *checker) : checker(checker) {}
+
+		virtual DDR_RC visitType(Type *type) const;
+		virtual DDR_RC visitClass(ClassUDT *type) const;
+		virtual DDR_RC visitEnum(EnumUDT *type) const;
+		virtual DDR_RC visitNamespace(NamespaceUDT *type) const;
+		virtual DDR_RC visitTypedef(TypedefUDT *type) const;
+		virtual DDR_RC visitUnion(UnionUDT *type) const;
+	};
+
+	friend class ProblemReporter;
+	friend class ReferenceVisitor;
+
+	std::set<Type *> incomplete;
+	std::queue<Type *> todo;
+
+public:
+	SizeChecker() : incomplete(), todo() {}
+	~SizeChecker() {}
+
+	DDR_RC check(OMRPortLibrary *portLibrary, const vector<Type *> &types);
 };
 
 #undef DEBUG_PRINT_TYPES
@@ -188,6 +241,13 @@ main(int argc, char *argv[])
 		if (none) {
 			omrtty_printf("No blacklisted types.\n");
 		}
+	}
+
+	/* Check that all referenced types have known sizes. */
+	if (DDR_RC_OK == rc) {
+		SizeChecker checker;
+
+		rc = checker.check(&portLibrary, ir._types);
 	}
 
 	/* Generate output. */
@@ -333,4 +393,152 @@ Options::readFileList(OMRPortLibrary *portLibrary, const char *listFileName, vec
 	}
 
 	return rc;
+}
+
+DDR_RC
+SizeChecker::check(OMRPortLibrary *portLibrary, const vector<Type *> &types)
+{
+	DDR_RC rc = DDR_RC_OK;
+	const ReferenceVisitor visitor(this);
+
+	/* Visit top-level types. */
+	for (vector<Type *>::const_iterator it = types.begin(); it != types.end(); ++it) {
+		(*it)->acceptVisitor(visitor);
+	}
+
+	/* Visit nested types. */
+	for (; !todo.empty(); todo.pop()) {
+		todo.front()->acceptVisitor(visitor);
+	}
+
+	/* Complain about types of unknown size. */
+	if (!incomplete.empty()) {
+		const ProblemReporter reporter(portLibrary);
+
+		for (std::set<Type *>::const_iterator it = incomplete.begin(); it != incomplete.end(); ++it) {
+			Type *type = *it;
+
+			if (DDR_RC_OK != type->acceptVisitor(reporter)) {
+				rc = DDR_RC_ERROR;
+			}
+		}
+
+		incomplete.clear();
+	}
+
+	return rc;
+}
+
+DDR_RC
+SizeChecker::ProblemReporter::visitType(Type *type) const
+{
+	return DDR_RC_OK;
+}
+
+DDR_RC
+SizeChecker::ProblemReporter::visitClass(ClassUDT *type) const
+{
+	return DDR_RC_OK;
+}
+
+DDR_RC
+SizeChecker::ProblemReporter::visitEnum(EnumUDT *type) const
+{
+	OMRPORT_ACCESS_FROM_OMRPORT(portLibrary);
+
+	omrtty_printf("The size enum type '%s' is unknown:\n", type->_name.c_str());
+
+	return DDR_RC_ERROR;
+}
+
+DDR_RC
+SizeChecker::ProblemReporter::visitNamespace(NamespaceUDT *type) const
+{
+	return DDR_RC_OK;
+}
+
+DDR_RC
+SizeChecker::ProblemReporter::visitTypedef(TypedefUDT *type) const
+{
+	return DDR_RC_OK;
+}
+
+DDR_RC
+SizeChecker::ProblemReporter::visitUnion(UnionUDT *type) const
+{
+	return DDR_RC_OK;
+}
+
+void
+SizeChecker::ReferenceVisitor::addReference(Type *type) const
+{
+	if (NULL == type) {
+		/* We don't have a type (we don't expect the caller to check). */
+	} else if (0 != type->_sizeOf) {
+		/* The size is known. */
+	} else if (type->_blacklisted) {
+		/* Ignore blacklisted types. */
+	} else {
+		checker->incomplete.insert(type);
+	}
+}
+
+void
+SizeChecker::ReferenceVisitor::visitFields(const vector<Field *> &fields) const
+{
+	for (vector<Field *>::const_iterator it = fields.begin(); it != fields.end(); ++it) {
+		Field *field = *it;
+
+		/* We only need types that are used via at most one indirection. */
+		if (field->_modifiers._pointerCount <= 1) {
+			addReference(field->_fieldType);
+		}
+	}
+}
+
+DDR_RC
+SizeChecker::ReferenceVisitor::visitType(Type *type) const
+{
+	return DDR_RC_OK;
+}
+
+DDR_RC
+SizeChecker::ReferenceVisitor::visitClass(ClassUDT *type) const
+{
+	addReference(type->_superClass);
+	visitFields(type->_fieldMembers);
+
+	return visitNamespace(type);
+}
+
+DDR_RC
+SizeChecker::ReferenceVisitor::visitEnum(EnumUDT *type) const
+{
+	/* An enum cannot make references to other types. */
+	return DDR_RC_OK;
+}
+
+DDR_RC
+SizeChecker::ReferenceVisitor::visitNamespace(NamespaceUDT *type) const
+{
+	for (vector<UDT *>::const_iterator it = type->_subUDTs.begin(); it != type->_subUDTs.end(); ++it) {
+		checker->todo.push(*it);
+	}
+
+	return DDR_RC_OK;
+}
+
+DDR_RC
+SizeChecker::ReferenceVisitor::visitTypedef(TypedefUDT *type) const
+{
+	/* We only care about the size of a typedef if it is used. */
+	return DDR_RC_OK;
+}
+
+DDR_RC
+SizeChecker::ReferenceVisitor::visitUnion(UnionUDT *type) const
+{
+	visitFields(type->_fieldMembers);
+
+	return visitNamespace(type);
 }

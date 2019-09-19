@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -113,21 +113,4 @@ Modifiers::getSize(size_t typeSize) const
 		sizeOf *= *it;
 	}
 	return sizeOf;
-}
-
-bool
-Modifiers::operator==(const Modifiers &type) const
-{
-	bool arrayLengthsEqual = true;
-	for (size_t i = _arrayLengths.size(); i != 0; i -= 1) {
-		if (_arrayLengths[i] != type.getArrayLength(i)) {
-			arrayLengthsEqual = false;
-			break;
-		}
-	}
-
-	return arrayLengthsEqual
-		&& (_modifierFlags == type._modifierFlags)
-		&& (_referenceCount == type._referenceCount)
-		&& (_pointerCount == type._pointerCount);
 }

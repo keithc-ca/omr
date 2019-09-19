@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2018 IBM Corp. and others
+ * Copyright (c) 2015, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -61,26 +61,4 @@ NamespaceUDT *
 UDT::getNamespace()
 {
 	return _outerNamespace;
-}
-
-bool
-UDT::operator==(const Type & rhs) const
-{
-	return rhs.compareToUDT(*this);
-}
-
-bool
-UDT::compareToUDT(const UDT &other) const
-{
-	if (compareToType(other)) {
-		if (NULL != _outerNamespace) {
-			if (NULL != other._outerNamespace) {
-				return *_outerNamespace == *other._outerNamespace;
-			}
-		} else if (NULL == other._outerNamespace) {
-			return true;
-		}
-	}
-
-	return false;
 }

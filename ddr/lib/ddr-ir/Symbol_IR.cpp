@@ -461,22 +461,6 @@ private:
 	DDR_RC visitComposite(ClassType *type) const;
 };
 
-class TypeCheck
-{
-private:
-    const Type * const _other;
-
-public:
-    explicit TypeCheck(const Type *other)
-    	: _other(other)
-    {
-    }
-
-    bool operator()(Type *compare) const {
-		return *compare == *_other;
-	}
-};
-
 DDR_RC
 TypeReplaceVisitor::visitType(Type *type) const
 {
@@ -585,11 +569,6 @@ Symbol_IR::findTypeInMap(Type *typeToFind)
 			const set<Type *> &matches = map_it->second;
 			if (1 == matches.size()) {
 				returnType = *matches.begin();
-			} else if (1 < matches.size()) {
-				set<Type *>::const_iterator it = find_if(matches.begin(), matches.end(), TypeCheck(typeToFind));
-				if (matches.end() != it) {
-					returnType = *it;
-				}
 			}
 		}
 	}

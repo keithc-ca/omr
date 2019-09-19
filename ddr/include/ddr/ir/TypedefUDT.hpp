@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,9 +39,6 @@ public:
 	virtual size_t getPointerCount();
 	virtual size_t getArrayDimensions();
 	virtual Type *getBaseType();
-
-	bool operator==(const Type & rhs) const;
-	virtual bool compareToTypedef(const TypedefUDT &) const;
 };
 
 #endif /* TYPEDEFUDT_HPP */

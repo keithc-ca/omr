@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2018 IBM Corp. and others
+ * Copyright (c) 2015, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,17 +43,4 @@ DDR_RC
 ClassUDT::acceptVisitor(const TypeVisitor &visitor)
 {
 	return visitor.visitClass(this);
-}
-
-bool
-ClassUDT::operator==(const Type & rhs) const
-{
-	return rhs.compareToClass(*this);
-}
-
-bool
-ClassUDT::compareToClass(const ClassUDT &other) const
-{
-	return compareToClasstype(other)
-		&& (*_superClass == *other._superClass);
 }

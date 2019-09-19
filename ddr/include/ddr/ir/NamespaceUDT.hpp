@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,9 +43,6 @@ public:
 	virtual void addMacro(Macro *macro);
 	virtual std::vector<UDT *> * getSubUDTS();
 	virtual void renameFieldsAndMacros(const FieldOverride &fieldOverride, Type *replacementType);
-
-	bool operator==(const Type & rhs) const;
-	virtual bool compareToNamespace(const NamespaceUDT &) const;
 };
 
 #endif /* NAMESPACEUDT_HPP */

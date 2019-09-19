@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,16 +42,4 @@ UnionUDT::getSymbolKindName() const
 	static const string unionKind("union");
 
 	return unionKind;
-}
-
-bool
-UnionUDT::operator==(const Type & rhs) const
-{
-	return rhs.compareToUnion(*this);
-}
-
-bool
-UnionUDT::compareToUnion(const UnionUDT &other) const
-{
-	return compareToClasstype(other);
 }

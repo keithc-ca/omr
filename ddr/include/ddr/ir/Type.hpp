@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -79,16 +79,6 @@ public:
 	virtual void renameFieldsAndMacros(const FieldOverride &fieldOverride, Type *replacementType);
 	virtual Type *getBaseType();
 	Type *getOpaqueType();
-
-	bool operator==(const Type & rhs) const;
-	virtual bool compareToClass(const ClassUDT &) const;
-	virtual bool compareToClasstype(const ClassType &) const;
-	virtual bool compareToEnum(const EnumUDT &) const;
-	virtual bool compareToNamespace(const NamespaceUDT &) const;
-	virtual bool compareToType(const Type &) const;
-	virtual bool compareToTypedef(const TypedefUDT &) const;
-	virtual bool compareToUDT(const UDT &) const;
-	virtual bool compareToUnion(const UnionUDT &) const;
 };
 
 #endif /* TYPE_HPP */

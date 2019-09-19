@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2018 IBM Corp. and others
+ * Copyright (c) 2015, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,7 +23,6 @@
 #define CLASSUDT_HPP
 
 #include "ddr/ir/ClassType.hpp"
-#include "ddr/error.hpp"
 
 /* This type represents both class and struct types */
 class ClassUDT : public ClassType
@@ -38,9 +37,6 @@ public:
 	virtual const string &getSymbolKindName() const;
 
 	virtual DDR_RC acceptVisitor(const TypeVisitor &visitor);
-
-	bool operator==(const Type & rhs) const;
-	virtual bool compareToClass(const ClassUDT &) const;
 };
 
 #endif /* CLASSUDT_HPP */

@@ -37,9 +37,6 @@ public:
 	virtual ~ClassType();
 
 	virtual void renameFieldsAndMacros(const FieldOverride &fieldOverride, Type *replacementType);
-
-	bool operator==(const Type & rhs) const;
-	virtual bool compareToClasstype(const ClassType &) const;
 };
 
 #endif /* CLASSTYPE_HPP */

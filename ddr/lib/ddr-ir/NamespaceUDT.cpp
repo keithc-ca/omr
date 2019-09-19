@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -108,24 +108,4 @@ NamespaceUDT::renameFieldsAndMacros(const FieldOverride &fieldOverride, Type *re
 	for (vector<UDT *>::iterator it = _subUDTs.begin(); it != _subUDTs.end(); ++it) {
 		(*it)->renameFieldsAndMacros(fieldOverride, replacementType);
 	}
-}
-
-bool
-NamespaceUDT::operator==(const Type & rhs) const
-{
-	return rhs.compareToNamespace(*this);
-}
-
-bool
-NamespaceUDT::compareToNamespace(const NamespaceUDT &other) const
-{
-	bool subUDTsEqual = _subUDTs.size() == other._subUDTs.size();
-	vector<UDT *>::const_iterator it2 = other._subUDTs.begin();
-	for (vector<UDT *>::const_iterator it = _subUDTs.begin();
-		it != _subUDTs.end() && it2 != other._subUDTs.end() && subUDTsEqual;
-		++ it, ++ it2) {
-		subUDTsEqual = (**it == **it2);
-	}
-	return compareToUDT(other)
-		&& subUDTsEqual;
 }

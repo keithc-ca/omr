@@ -149,61 +149,6 @@ Type::getOpaqueType()
 	return type;
 }
 
-bool
-Type::operator==(const Type & rhs) const
-{
-	return rhs.compareToType(*this);
-}
-
-bool
-Type::compareToType(const Type &other) const
-{
-	return (_name == other._name)
-		&& ((0 == _sizeOf) || (0 == other._sizeOf) || (_sizeOf == other._sizeOf));
-}
-
-bool
-Type::compareToUDT(const UDT &) const
-{
-	return false;
-}
-
-bool
-Type::compareToNamespace(const NamespaceUDT &) const
-{
-	return false;
-}
-
-bool
-Type::compareToEnum(const EnumUDT &) const
-{
-	return false;
-}
-
-bool
-Type::compareToTypedef(const TypedefUDT &) const
-{
-	return false;
-}
-
-bool
-Type::compareToClasstype(const ClassType &) const
-{
-	return false;
-}
-
-bool
-Type::compareToUnion(const UnionUDT &) const
-{
-	return false;
-}
-
-bool
-Type::compareToClass(const ClassUDT &) const
-{
-	return false;
-}
-
 enum TypeKind
 {
 	TK_char,

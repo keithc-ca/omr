@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -54,7 +54,6 @@ public:
 	size_t getArrayLength(size_t index) const;
 	size_t getArrayDimensions() const;
 	size_t getSize(size_t typeSize) const;
-	bool operator==(const Modifiers &type) const;
 };
 
 #endif /* MODIFIERS_HPP */

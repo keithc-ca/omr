@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2016, 2019 IBM Corp. and others
+# Copyright (c) 2016, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,14 +36,11 @@ MODULE_INCLUDES += \
 
 ifeq (linux,$(OMR_HOST_OS))
   MODULE_SHARED_LIBS += rt pthread dwarf
-  ifeq (x86,$(OMR_HOST_ARCH))
+  ifneq (,$(filter aarch64 ppc s390 x86,$(OMR_HOST_ARCH)))
     MODULE_SHARED_LIBS += elf
   endif
-  ifeq (ppc,$(OMR_HOST_ARCH))
-    MODULE_SHARED_LIBS += elf
-  endif
-  ifeq (s390,$(OMR_HOST_ARCH))
-    MODULE_SHARED_LIBS += elf z
+  ifneq (,$(filter aarch64 s390,$(OMR_HOST_ARCH)))
+    MODULE_SHARED_LIBS += z
   endif
 endif
 

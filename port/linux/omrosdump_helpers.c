@@ -628,6 +628,33 @@ setChecksumMarkAllPagesWritableHeader(MarkAllPagesWritableHeader *header)
  *   40013000-40014000 rw-p 00013000 03:03 1161002    /lib/ld-2.2.5.so
  *   40014000-40016000 rw-p 00000000 00:00 0
  * ...
+
+	%zx-%zx rwxp %d ?
+	556e2b35d000-556e2b383000 r-xp 00000000 08:01 9830472                    /bin/less
+	556e2b582000-556e2b583000 r--p 00025000 08:01 9830472                    /bin/less
+	556e2b583000-556e2b587000 rw-p 00026000 08:01 9830472                    /bin/less
+	556e2b587000-556e2b58b000 rw-p 00000000 00:00 0
+	556e2c7c6000-556e2c7e7000 rw-p 00000000 00:00 0                          [heap]
+	7fe5e83ee000-7fe5e8dbd000 r--p 00000000 08:01 11672076                   /usr/lib/locale/locale-archive
+	7fe5e8dbd000-7fe5e8fa4000 r-xp 00000000 08:01 13505161                   /lib/x86_64-linux-gnu/libc-2.27.so
+	7fe5e8fa4000-7fe5e91a4000 ---p 001e7000 08:01 13505161                   /lib/x86_64-linux-gnu/libc-2.27.so
+	7fe5e91a4000-7fe5e91a8000 r--p 001e7000 08:01 13505161                   /lib/x86_64-linux-gnu/libc-2.27.so
+	7fe5e91a8000-7fe5e91aa000 rw-p 001eb000 08:01 13505161                   /lib/x86_64-linux-gnu/libc-2.27.so
+	7fe5e91aa000-7fe5e91ae000 rw-p 00000000 00:00 0
+	7fe5e91ae000-7fe5e91d3000 r-xp 00000000 08:01 13502285                   /lib/x86_64-linux-gnu/libtinfo.so.5.9
+	7fe5e91d3000-7fe5e93d3000 ---p 00025000 08:01 13502285                   /lib/x86_64-linux-gnu/libtinfo.so.5.9
+	7fe5e93d3000-7fe5e93d7000 r--p 00025000 08:01 13502285                   /lib/x86_64-linux-gnu/libtinfo.so.5.9
+	7fe5e93d7000-7fe5e93d8000 rw-p 00029000 08:01 13502285                   /lib/x86_64-linux-gnu/libtinfo.so.5.9
+	7fe5e93d8000-7fe5e93ff000 r-xp 00000000 08:01 13505133                   /lib/x86_64-linux-gnu/ld-2.27.so
+	7fe5e95e4000-7fe5e95e9000 rw-p 00000000 00:00 0
+	7fe5e95ff000-7fe5e9600000 r--p 00027000 08:01 13505133                   /lib/x86_64-linux-gnu/ld-2.27.so
+	7fe5e9600000-7fe5e9601000 rw-p 00028000 08:01 13505133                   /lib/x86_64-linux-gnu/ld-2.27.so
+	7fe5e9601000-7fe5e9602000 rw-p 00000000 00:00 0
+	7ffe3bbe3000-7ffe3bc04000 rw-p 00000000 00:00 0                          [stack]
+	7ffe3bce4000-7ffe3bce7000 r--p 00000000 00:00 0                          [vvar]
+	7ffe3bce7000-7ffe3bce9000 r-xp 00000000 00:00 0                          [vdso]
+	ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0                  [vsyscall]
+
  *
  * This implementation expects the format to be strictly conformed to.
  * If deviations in the format are discovered, we'll have to make this routine
@@ -657,17 +684,17 @@ markAllPagesWritable(struct OMRPortLibrary *portLibrary)
 {
 	BOOLEAN modified = TRUE;
 	uintptr_t log2N = (sizeof(void *) * 8) - 12; /* assume 4096 byte pages */
-	uintptr_t pass;
+	uintptr_t pass = 0;
 
-	MarkAllPagesWritableHeader *buffer = (MarkAllPagesWritableHeader *) portLibrary->portGlobals->procSelfMap;
+	MarkAllPagesWritableHeader *buffer = (MarkAllPagesWritableHeader *)portLibrary->portGlobals->procSelfMap;
 
 	/* Record proc/self/maps file into the pre-allocated buffer before changing the pages to writable */
 	/* Nothing should be changing any more as this fork is frozen and will die */
 
 	/* CMVC 150400 We are using native file io calls here to avoid the mutex in the memcheck library. */
-	if (buffer != NULL) {
+	if (NULL != buffer) {
 		FILE *fd = fopen(linuxMemoryMapsFile, "r");
-		if (fd != NULL) {
+		if (NULL != fd) {
 			/* Gratuitous xors prevent the eyecatcher constant from appearing in the code */
 			uint32_t eyeCatcher = J9OSDUMP_EYECATCHER ^ 0xffffffff;
 			char *bufferData = (char *)(buffer + 1);
@@ -677,8 +704,9 @@ markAllPagesWritable(struct OMRPortLibrary *portLibrary)
 			buffer->maxSize = J9OSDUMP_SIZE - sizeof(MarkAllPagesWritableHeader);
 
 			while ((fread(readBuffer, 1, 1, fd) == 1) && (buffer->size < buffer->maxSize)) {
-				*bufferData++ = readBuffer[0];
-				(buffer->size)++;
+				*bufferData = readBuffer[0];
+				bufferData += 1;
+				buffer->size += 1;
 			}
 			fclose(fd);
 			setChecksumMarkAllPagesWritableHeader(buffer);
@@ -690,13 +718,14 @@ markAllPagesWritable(struct OMRPortLibrary *portLibrary)
 
 		modified = FALSE;
 
-		if (fd != NULL) {
+		if (NULL != fd) {
 			/* buf is big enough to fit the address range and permissions for 32 & 64 bit */
 			char buf[MAX_PTR_SIZE_BYTES * 4 + sizeof("- rwxp")];
 			while (fread(buf, 1, sizeof(buf) - 1, fd) == sizeof(buf) - 1) {
-				char *next;
-				uint8_t *start, *end;
-				int rc;
+				char *next = NULL;
+				uint8_t *start = NULL;
+				uint8_t *end = NULL;
+				int rc = 0;
 				int prot = 0;
 
 				/*
@@ -728,7 +757,7 @@ markAllPagesWritable(struct OMRPortLibrary *portLibrary)
 				if (0 == (prot & PROT_WRITE)) {
 					/* mark the pages as writable */
 					rc = mprotect(start, end - start, prot | PROT_WRITE);
-					if (rc == 0) {
+					if (0 == rc) {
 						modified = TRUE;
 					}
 				}
@@ -922,15 +951,15 @@ printMemoryMap(struct OMRPortLibrary *portLibrary, uintptr_t addrSize)
 static uintptr_t
 getSharedAndPrivateDataSegments(struct OMRPortLibrary *portLibrary, intptr_t fd, uintptr_t addrSize, uint8_t **ppStart, uint8_t **ppEnd)
 {
-	char ch;
+	char ch = 0;
 	char outbuf[EsMaxPath];
 	char path[EsMaxPath];
 	int32_t outcursor = 0;
 	int32_t bytesRead = 0;
-	uint8_t *start;
-	uint8_t *end;
-	char attr_flag;
-	char *next;
+	uint8_t *start = NULL;
+	uint8_t *end = NULL;
+	char attr_flag = 0;
+	char *next = NULL;
 	uintptr_t rc = 0;
 
 	memset(outbuf, '\0', sizeof(outbuf));
@@ -941,6 +970,7 @@ getSharedAndPrivateDataSegments(struct OMRPortLibrary *portLibrary, intptr_t fd,
 			if (bytesRead > 0) {
 				outbuf[outcursor] = ch;
 				if ('\n' == ch) {
+					uintptr_t ignored = 0;
 					/* process the entire line */
 					outbuf[outcursor] = '\0';
 					outcursor = 0;
@@ -973,14 +1003,17 @@ getSharedAndPrivateDataSegments(struct OMRPortLibrary *portLibrary, intptr_t fd,
 
 						/* get the offset */
 						next++;
-						strtoull(next, &next, 16);
+						ignored = (uintptr_t)strtoull(next, &next, 16);
 
 						/* skip over the device */
 						next += 5;
 
 						/* get the inode */
 						next++;
-						strtoull(next, &next, 10);
+						ignored = (uintptr_t)strtoull(next, &next, 10);
+						if (0 == ignored) {
+							ignored = 1;
+						}
 
 						/* get the path */
 						while (isspace(*next)) {

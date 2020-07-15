@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2016 IBM Corp. and others
+ * Copyright (c) 2016, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -81,7 +81,6 @@ renameDump(struct OMRPortLibrary *portLibrary, char *filename, pid_t pid, int si
 		return 1;
 	}
 
-
 	/* Check that the path we found was to a regular file (not to an existing directory, pipe, symlink etc) */
 	if (0 == stat(derivedAbsoluteCorePath, &attrBuf)) {
 		if (!S_ISREG(attrBuf.st_mode)) {
@@ -124,7 +123,6 @@ renameDump(struct OMRPortLibrary *portLibrary, char *filename, pid_t pid, int si
 			portLibrary->tty_printf(portLibrary, "Attempt to rename \"%s\" to \"%s\" failed with error: %s\n", derivedAbsoluteCorePath, filename, strerror(errno));
 			return 1;
 		}
-
 	} else {
 		/* Filename was empty */
 		strncpy(filename, derivedAbsoluteCorePath, EsMaxPath);
@@ -145,21 +143,19 @@ static intptr_t
 waitCore(char *path)
 {
 	int rc = 1;
-	time_t starttime;
-	FILE *fd;
-	starttime = time(NULL);
+	time_t starttime = time(NULL);
 
 	while (0 != rc) {
-		fd = fopen(path, "r");
+		FILE *fd = fopen(path, "r");
 		if (NULL == fd) {
-			/* Could not open the file */
-			rc = 1;
+			/* Could not open the file. */
 			if (5 < difftime(time(NULL), starttime)) {
+				/* We waited long enough. */
 				break;
 			}
 			usleep(100000);
 		} else {
-			/* Opened the file successfully, so we know it exists. Now close it */
+			/* Opened the file successfully, so we know it exists. Now close it. */
 			fclose(fd);
 			rc = 0;
 		}

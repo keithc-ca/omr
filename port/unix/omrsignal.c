@@ -406,7 +406,7 @@ omrsig_protect(struct OMRPortLibrary *portLibrary, omrsig_protected_fn fn, void 
 		 */
 		OMRCurrentSignal *currentSignal = omrthread_tls_get(thisThread, tlsKeyCurrentSignal);
 
-		/* setjmp/longjmp does not clear the mask setup by the OS when it delivers the signal. User sigsetjmp/siglongjmp(buf, 1) instead */
+		/* setjmp/longjmp does not clear the mask setup by the OS when it delivers the signal. Use sigsetjmp/siglongjmp(buf, 1) instead */
 		if (0 != sigsetjmp(thisRecord.returnBuf, 1)) {
 			/* the handler had long jumped back here -- reset the signal handler stack and currentSignal and return */
 			omrthread_tls_set(thisThread, tlsKey, thisRecord.previous);

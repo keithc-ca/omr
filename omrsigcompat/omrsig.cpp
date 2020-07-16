@@ -78,16 +78,13 @@ static SIGNAL signalOS = NULL;
 static bool
 handlerIsFunction(const struct sigaction *act)
 {
-	bool functionHandler = (SIG_DFL != act->sa_handler) && (SIG_IGN != act->sa_handler) && (NULL != act->sa_handler);
+	return ((SIG_DFL != act->sa_handler) && (SIG_IGN != act->sa_handler) && (NULL != act->sa_handler))
 #if defined(POSIX_SIGNAL)
-	return (((sigaction_t)SIG_DFL != act->sa_sigaction)
-		&& ((sigaction_t)SIG_IGN != act->sa_sigaction)
-		&& (SA_SIGINFO & act->sa_flags))
-		|| functionHandler;
-#else /* defined(POSIX_SIGNAL) */
-	return functionHandler;
+			|| ((SA_SIGINFO & act->sa_flags)
+				&& ((sigaction_t)SIG_DFL != act->sa_sigaction)
+				&& ((sigaction_t)SIG_IGN != act->sa_sigaction))
 #endif /* defined(POSIX_SIGNAL) */
-
+			;
 }
 
 static bool
@@ -105,7 +102,7 @@ validSignalNum(int signum, bool nullAction)
 }
 
 /**
- * Manually process the flags for the registered secondary handler to call it as if it had been evoked by the OS
+ * Manually process the flags for the registered secondary handler to call it as if it had been invoked by the OS
  * in response to a signal, without re-raising it.
  */
 int
@@ -148,7 +145,6 @@ omrsig_handler(int sig, void *siginfo, void *uc)
 				sigaddset(&mask, sig);
 				ec = pthread_sigmask(SIG_UNBLOCK, &mask, NULL);
 			}
-
 
 			/* SA_RESETHAND - If set, the disposition of the signal will be reset to SIG_DFL and the SA_SIGINFO flag
 			 * will be cleared on entry to the signal handler. Does not work for SIGILL or SIGTRAP, silently. Also
@@ -200,8 +196,8 @@ omrsig_primary_signal(int signum, sighandler_t handler)
 	struct sigaction act;
 	struct sigaction oldact;
 
-	memset(&act, 0, sizeof(struct sigaction));
-	memset(&oldact, 0, sizeof(struct sigaction));
+	memset(&act, 0, sizeof(act));
+	memset(&oldact, 0, sizeof(oldact));
 
 	act.sa_handler = handler;
 #if defined(POSIX_SIGNAL)
@@ -209,11 +205,9 @@ omrsig_primary_signal(int signum, sighandler_t handler)
 	act.sa_flags = SA_NODEFER | SA_RESTART;
 	sigemptyset(&act.sa_mask);
 #endif /* defined(POSIX_SIGNAL) */
-	sighandler_t ret = SIG_DFL;
+	sighandler_t ret = SIG_ERR;
 	if (0 == omrsig_sigaction_internal(signum, &act, &oldact, true)) {
 		ret = oldact.sa_handler;
-	} else {
-		ret = SIG_ERR;
 	}
 	return ret;
 }
@@ -257,8 +251,8 @@ omrsig_signal_internal(int signum, sighandler_t handler)
 	struct sigaction act;
 	struct sigaction oldact;
 
-	memset(&act, 0, sizeof(struct sigaction));
-	memset(&oldact, 0, sizeof(struct sigaction));
+	memset(&act, 0, sizeof(act));
+	memset(&oldact, 0, sizeof(oldact));
 
 	oldact.sa_handler = SIG_DFL;
 	act.sa_handler = handler;
@@ -267,20 +261,16 @@ omrsig_signal_internal(int signum, sighandler_t handler)
 	sigemptyset(&act.sa_mask);
 #endif /* defined(POSIX_SIGNAL) */
 
-	sighandler_t ret = SIG_DFL;
+	sighandler_t ret = SIG_ERR;
 #if defined(OMR_OS_WINDOWS)
 	if (SIG_GET == handler) {
 		if (0 == omrsig_sigaction_internal(signum, NULL, &oldact, false)) {
 			ret = oldact.sa_handler;
-		} else {
-			ret = SIG_ERR;
 		}
 	} else {
 #endif /* defined(OMR_OS_WINDOWS) */
 		if (0 == omrsig_sigaction_internal(signum, &act, &oldact, false)) {
 			ret = oldact.sa_handler;
-		} else {
-			ret = SIG_ERR;
 		}
 #if defined(OMR_OS_WINDOWS)
 	}
@@ -383,30 +373,26 @@ omrsig_sigaction_internal(int signum, const struct sigaction *act, struct sigact
 {
 	int rc = 0;
 	/* Check for valid signum. */
-	if (!validSignalNum(signum, (NULL == act) || (!handlerIsFunction(act)))) {
+	if (!validSignalNum(signum, (NULL == act) || !handlerIsFunction(act))) {
 		rc = -1;
 		errno = EINVAL;
 	} else {
 		/* Get signal slot. */
-		struct sigaction *savedAction = NULL;
-		if (primary) {
-			savedAction = &sigData[signum].primaryAction;
-		} else {
-			savedAction = &sigData[signum].secondaryAction;
-		}
+		OMR_SigData * const sigSlot = &sigData[signum];
+		struct sigaction * const savedAction = primary ? &sigSlot->primaryAction : &sigSlot->secondaryAction;
 
 		SIGLOCK(sigMutex);
 		if (NULL != oldact) {
 			struct sigaction oact;
 			bool returnOldAction = false;
-			memset(&oact, 0, sizeof(struct sigaction));
+			memset(&oact, 0, sizeof(oact));
 			rc = omrsig_signalOS_internal(signum, NULL, &oact);
 			if (-1 != rc) {
 #if defined(POSIX_SIGNAL)
 				if (OMR_ARE_NO_BITS_SET(oact.sa_flags, SA_SIGINFO)) {
 #endif /* defined(POSIX_SIGNAL) */
 					if (((sighandler_t)SIG_DFL == oact.sa_handler)
-						|| ((sighandler_t)SIG_IGN == oact.sa_handler)
+					||  ((sighandler_t)SIG_IGN == oact.sa_handler)
 					) {
 						returnOldAction = true;
 					}
@@ -437,14 +423,14 @@ omrsig_sigaction_internal(int signum, const struct sigaction *act, struct sigact
 
 			/* Register primary with OS if it exists, otherwise register the secondary. */
 			struct sigaction newRegisteringHandler;
-			if (handlerIsFunction(&sigData[signum].primaryAction)) {
+			if (handlerIsFunction(&sigSlot->primaryAction)) {
 				/* If secondary has SA_ONSTACK/NOCLDSTOP/NOCLDWAIT flag and primary does not, add those flags. */
-				newRegisteringHandler = sigData[signum].primaryAction;
+				newRegisteringHandler = sigSlot->primaryAction;
 #if defined(POSIX_SIGNAL)
-				newRegisteringHandler.sa_flags |= sigData[signum].secondaryAction.sa_flags & SECONDARY_FLAGS_ALLOWLIST;
+				newRegisteringHandler.sa_flags |= sigSlot->secondaryAction.sa_flags & SECONDARY_FLAGS_ALLOWLIST;
 #endif /* defined(POSIX_SIGNAL) */
 			} else {
-				newRegisteringHandler = sigData[signum].secondaryAction;
+				newRegisteringHandler = sigSlot->secondaryAction;
 			}
 #if defined(J9ZOS390)
 			/* On zos, when an alt signal stack is set, the second call to pthread_sigmask() or
@@ -660,4 +646,4 @@ sysv_signal(int signum, sighandler_t handler) __THROW
 #endif /* !defined(J9ZOS390) */
 #endif /* !defined(OMR_OS_WINDOWS) */
 
-} /* extern "C" { */
+} /* extern "C" */

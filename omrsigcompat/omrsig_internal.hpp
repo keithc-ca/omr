@@ -75,7 +75,6 @@ struct OMR_SigData {
 #define NSIG MNSIG
 #endif /* defined(J9ZOS390) */
 
-
 #if defined(OMR_OS_WINDOWS)
 
 #define LockMask
@@ -108,16 +107,16 @@ struct OMR_SigData {
  * if it is undefined.
  */
 #error "Unrecognized MSVC_RUNTIME_DLL."
-#endif /* (_MSC_VER >= 1200) */
+#endif /* (_MSC_VER == 1200) */
 #endif /* !defined(MSVC_RUINTIME_DLL) */
 #else /* defined(OMR_OS_WINDOWS) */
 
 #define LockMask sigset_t *previousMask
 #define SIGLOCK(sigMutex) \
 	sigset_t previousMask; \
-	sigMutex.lock(&previousMask);
+	sigMutex.lock(&previousMask)
 #define SIGUNLOCK(sigMutex) \
-	sigMutex.unlock(&previousMask);
+	sigMutex.unlock(&previousMask)
 
 #endif /* defined(OMR_OS_WINDOWS) */
 
@@ -128,14 +127,14 @@ private:
 
 public:
 	SigMutex()
+		: locked(0)
 	{
-		locked = 0;
 	}
 
 	void lock(LockMask)
 	{
 #if !defined(OMR_OS_WINDOWS)
-		/* Receiving a signal while a thread is holding a lock would cause deadlock. */
+		/* Receiving a signal while a thread is holding a lock could cause deadlock. */
 		sigset_t mask;
 		sigfillset(&mask);
 		pthread_sigmask(SIG_BLOCK, &mask, previousMask);

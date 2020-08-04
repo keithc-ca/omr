@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2016 IBM Corp. and others
+ * Copyright (c) 2014, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,12 +32,18 @@ extern "C" {
 /* This file defines the interface used by omrglue/ code to access OMR profiling-related functions */
 
 #if defined(_MSC_VER)
+#pragma warning(push)
 #pragma warning(disable : 4200)
 #endif /* defined(_MSC_VER) */
+
 typedef struct OMR_MethodDictionaryEntry {
 	const void *key;
 	const char *propertyValues[];
 } OMR_MethodDictionaryEntry;
+
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif /* defined(_MSC_VER) */
 
 /* ---------------- OMR_MethodDictionary.cpp ---------------- */
 

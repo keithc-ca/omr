@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -115,6 +115,12 @@ typedef struct UtDataHeader {
  * Trace Buffer disk record
  * =============================================================================
  */
+
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable : 4200)
+#endif /* defined(_MSC_VER) */
+
 typedef struct UtTraceRecord {
 	uint64_t sequence;		/* Time of latest entry           */
 	uint64_t wrapSequence;	/* Time of last wrap              */
@@ -125,8 +131,12 @@ typedef struct UtTraceRecord {
 	uint64_t threadSyn2;	/* Thread synonym 2               */
 	int32_t firstEntry;		/* Offset to first trace entry    */
 	int32_t nextEntry;		/* Offset to next entry           */
-	char threadName[1];		/* Thread name                    */
+	char threadName[];		/* Thread name                    */
 } UtTraceRecord;
+
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif /* defined(_MSC_VER) */
 
 /*
  * =============================================================================

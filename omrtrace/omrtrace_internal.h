@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -153,12 +153,22 @@ typedef struct OMR_TraceGlobal OMR_TraceGlobal;
  *  Trace configuration buffer (UTCF)
  * =============================================================================
  */
+
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable : 4200)
+#endif /* defined(_MSC_VER) */
+
 #define UT_TRACE_CONFIG_NAME "UTCF"
 typedef struct  UtTraceCfg {
 	UtDataHeader       header;
 	struct UtTraceCfg  *next;             /* Next trace config command        */
-	char               command[1];       /* Start of variable length section */
+	char               command[];         /* Start of variable length section */
 } UtTraceCfg;
+
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif /* defined(_MSC_VER) */
 
 typedef struct UtDeferredConfigInfo {
 	char *componentName;

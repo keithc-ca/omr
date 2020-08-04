@@ -177,10 +177,16 @@ typedef struct UtProcSection {
  * Active (UTTA)
  * =============================================================================
  */
+
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable : 4200)
+#endif /* defined(_MSC_VER) */
+
 #define UT_TRACE_ACTIVE_SECTION_NAME "UTTA"
 typedef struct UtActiveSection {
 	UtDataHeader header; /* Eyecatcher, version etc        */
-	char active[1]; /* Trace activation commands      */
+	char active[]; /* Trace activation commands      */
 } UtActiveSection;
 
 /*
@@ -191,7 +197,7 @@ typedef struct UtActiveSection {
 #define UT_TRACE_SERVICE_SECTION_NAME "UTSS"
 typedef struct UtServiceSection {
 	UtDataHeader header; /* Eyecatcher, version etc        */
-	char level[1]; /* Service level info             */
+	char level[]; /* Service level info             */
 } UtServiceSection;
 
 /*
@@ -202,8 +208,12 @@ typedef struct UtServiceSection {
 #define UT_TRACE_STARTUP_SECTION_NAME "UTSO"
 typedef struct UtStartupSection {
 	UtDataHeader header; /* Eyecatcher, version etc        */
-	char options[1]; /* Startup options                */
+	char options[]; /* Startup options                */
 } UtStartupSection;
+
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif /* defined(_MSC_VER) */
 
 /*
  * =============================================================================

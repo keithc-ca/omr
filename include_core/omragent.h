@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2015 IBM Corp. and others
+ * Copyright (c) 2014, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -337,9 +337,12 @@ struct OMR_TI_MemoryCategory {
  * Description of a method that was sampled by the profiler, which is retrieved using GetMethodDescriptions() in OMR_TI.
  * The size of this structure is language-specific. Call GetMethodProperties() to determine its required size.
  */
+
 #if defined(_MSC_VER)
+#pragma warning(push)
 #pragma warning(disable : 4200)
 #endif /* defined(_MSC_VER) */
+
 struct OMR_SampledMethodDescription {
 	/** See comments for GetMethodDescriptions(). */
 	omr_error_t reasonCode;
@@ -352,6 +355,10 @@ struct OMR_SampledMethodDescription {
 	 */
 	const char *propertyValues[];
 };
+
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif /* defined(_MSC_VER) */
 
 typedef struct OMR_AgentCallbacks {
 	uint32_t version; /* version counter, initially 0 */

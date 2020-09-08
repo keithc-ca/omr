@@ -51,16 +51,16 @@
       TR_ASSERT_FATAL((variable) != TLS_OUT_OF_INDEXES, "TlsAlloc failed with GetLastError = %d", GetLastError()); \
       }
 
-   #define tlsFree(variable)                                                             \
-      {                                                                                  \
-      DWORD rc = TlsFree(variable);                                                      \
-      TR_ASSERT_FATAL(rc != 0, "TlsFree failed with GetLastError = %d", GetLastError()); \
+   #define tlsFree(variable)                                                        \
+      {                                                                             \
+      BOOL rc = TlsFree(variable);                                                  \
+      TR_ASSERT_FATAL(rc, "TlsFree failed with GetLastError = %d", GetLastError()); \
       }
 
-   #define tlsSet(variable, value)                                                           \
-      {                                                                                      \
-      BOOL rc = TlsSetValue((variable), value);                                              \
-      TR_ASSERT_FATAL(rc != 0, "TlsSetValue failed with GetLastError = %d", GetLastError()); \
+   #define tlsSet(variable, value)                                                      \
+      {                                                                                 \
+      BOOL rc = TlsSetValue((variable), value);                                         \
+      TR_ASSERT_FATAL(rc, "TlsSetValue failed with GetLastError = %d", GetLastError()); \
       }
 
    #define tlsGet(variable, type) \

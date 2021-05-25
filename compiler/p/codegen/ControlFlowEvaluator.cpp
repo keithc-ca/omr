@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1290,17 +1290,17 @@ static TR::Register *compareLongsForOrderWithAnalyser(TR::InstOpCode::Mnemonic b
       TR::ILOpCodes firstOp = firstChild->getOpCodeValue();
       if (firstChild->getReferenceCount() == 1 && src1Reg == NULL)
          {
-	 if (firstOp == TR::iu2l || firstOp == TR::su2l ||
-	     (firstOp == TR::lushr &&
+         if (firstOp == TR::iu2l || firstOp == TR::su2l ||
+             (firstOp == TR::lushr &&
               firstChild->getSecondChild()->getOpCode().isLoadConst() &&
               (firstChild->getSecondChild()->getInt() & LONG_SHIFT_MASK) == 32))
-	    {
-	    firstChild = firstChild->getFirstChild();
-	    if (firstOp == TR::lushr)
-	       {
-	       firstUseHighOrder = true;
-	       }
-	    }
+            {
+            firstChild = firstChild->getFirstChild();
+            if (firstOp == TR::lushr)
+               {
+               firstUseHighOrder = true;
+               }
+            }
          }
       }
 
@@ -1310,17 +1310,17 @@ static TR::Register *compareLongsForOrderWithAnalyser(TR::InstOpCode::Mnemonic b
       TR::ILOpCodes secondOp = secondChild->getOpCodeValue();
       if (secondChild->getReferenceCount() == 1 && src2Reg == NULL)
          {
-	 if (secondOp == TR::iu2l || secondOp == TR::su2l ||
-	     (secondOp == TR::lushr &&
+         if (secondOp == TR::iu2l || secondOp == TR::su2l ||
+             (secondOp == TR::lushr &&
               secondChild->getSecondChild()->getOpCode().isLoadConst() &&
               (secondChild->getSecondChild()->getInt() & LONG_SHIFT_MASK) == 32))
-	    {
-	    secondChild = secondChild->getFirstChild();
-	    if (secondOp == TR::lushr)
-	       {
-	       secondUseHighOrder = true;
-	       }
-	    }
+            {
+            secondChild = secondChild->getFirstChild();
+            if (secondOp == TR::lushr)
+               {
+               secondUseHighOrder = true;
+               }
+            }
          }
       }
 
@@ -1378,7 +1378,7 @@ static TR::Register *compareLongsForOrderWithAnalyser(TR::InstOpCode::Mnemonic b
             {
             src2Low = src2Reg->getHighOrder();
             }
-	 else
+         else
             {
             src2Low = src2Reg->getLowOrder();
             }
@@ -1508,11 +1508,11 @@ TR::Register *OMR::Power::TreeEvaluator::compareLongsForOrder(TR::InstOpCode::Mn
       TR::RegisterDependencyConditions *deps = NULL;
 
       if ((firstChild->isHighWordZero() || secondChild->isHighWordZero()) &&
-	  !(secondChild->getOpCode().isLoadConst() &&
+          !(secondChild->getOpCode().isLoadConst() &&
            secondChild->getRegister() == NULL))
-	 {
-	 return compareLongsForOrderWithAnalyser(branchOp, reversedBranchOp, condReg, dstLabel, deps, node, cg, isHint, likeliness);
-	 }
+         {
+         return compareLongsForOrderWithAnalyser(branchOp, reversedBranchOp, condReg, dstLabel, deps, node, cg, isHint, likeliness);
+         }
 
       TR::Register *src2Reg;
       src1Reg = cg->evaluate(firstChild);
@@ -1533,7 +1533,7 @@ TR::Register *OMR::Power::TreeEvaluator::compareLongsForOrder(TR::InstOpCode::Mn
          }
 
       if (deps == NULL)
-	    deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(4, 4, cg->trMemory());
+         deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(4, 4, cg->trMemory());
 
       fixDepsForLongCompare(deps, src1Reg->getHighOrder(), src1Reg->getLowOrder(), useImmed ? NULL : src2Reg->getHighOrder(), useImmed ? NULL : src2Reg->getLowOrder());
       TR::PPCControlFlowInstruction *cfop = (TR::PPCControlFlowInstruction *)
@@ -1599,7 +1599,7 @@ TR::Register *OMR::Power::TreeEvaluator::ireturnEvaluator(TR::Node *node, TR::Co
    cg->decReferenceCount(node->getFirstChild());
    return NULL;
    }
- 
+
 TR::Register *OMR::Power::TreeEvaluator::lreturnEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::Register *returnRegister = cg->evaluate(node->getFirstChild());
@@ -3693,19 +3693,19 @@ static void lookupScheme1(TR::Node *node, bool unbalanced, bool fromTableEval, T
          generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, cndRegister, selector, fromTableEval?(i-2):(int32_t)(child->getCaseConstant()));
          }
       if (unbalanced)
-	 {
+         {
          bcond = conditions;
          if (child->getNumChildren() > 0)
-	    {
+            {
             cg->evaluate(child->getFirstChild());
             bcond = bcond->clone(cg, generateRegisterDependencyConditions(cg, child->getFirstChild(), 0));
-	    }
+            }
          generateDepConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, child->getBranchDestination()->getNode()->getLabel(), cndRegister, bcond);
-	 }
+         }
       else
-	 {
+         {
          generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, child->getBranchDestination()->getNode()->getLabel(), cndRegister);
-	 }
+         }
       }
 
    if (two_reg)
@@ -3772,21 +3772,21 @@ static void lookupScheme2(TR::Node *node, bool unbalanced, bool fromTableEval, T
       acond = acond->clone(cg, generateRegisterDependencyConditions(cg, secondChild->getFirstChild(), 0));
       }
 
-   int32_t   preInt = fromTableEval?0:node->getChild(2)->getCaseConstant();
+   int32_t preInt = fromTableEval ? 0 : node->getChild(2)->getCaseConstant();
 
    if (isInt64)
       {
       if (two_reg)
          {
-         loadConstant(cg, node, (int32_t)(preInt >> 32), valRegister->getHighOrder());
-         loadConstant(cg, node, (int32_t)preInt, valRegister->getLowOrder());
+         loadConstant(cg, node, (int32_t)(((int64_t)preInt) >> 32), valRegister->getHighOrder());
+         loadConstant(cg, node, preInt, valRegister->getLowOrder());
          }
       else
          loadConstant(cg, node, preInt, valRegister);
       }
    else
       {
-      loadConstant(cg, node, (int32_t) preInt, valRegister);
+      loadConstant(cg, node, preInt, valRegister);
       }
 
    for (int i=2; i<total; i++)
@@ -3812,21 +3812,21 @@ static void lookupScheme2(TR::Node *node, bool unbalanced, bool fromTableEval, T
          }
 
       if (unbalanced)
-	 {
+         {
          bcond = conditions;
          if (child->getNumChildren() > 0)
-	    {
+            {
             cg->evaluate(child->getFirstChild());
             bcond = bcond->clone(cg, generateRegisterDependencyConditions(cg, child->getFirstChild(), 0));
-	    }
+            }
          generateDepConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, child->getBranchDestination()->getNode()->getLabel(), cndRegister, bcond);
-	 }
+         }
       else
-	 {
+         {
          generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, child->getBranchDestination()->getNode()->getLabel(), cndRegister);
-	 }
+         }
       if (i<total-1)
-	 {
+         {
          int32_t diff = fromTableEval?1:(node->getChild(i+1)->getCaseConstant()-preInt);
          preInt += diff;
          if (!isInt64)
@@ -4150,7 +4150,7 @@ static void lookupScheme4(TR::Node *node, TR::CodeGenerator *cg)
    bool        two_reg = isInt64 && cg->comp()->target().is32Bit();
    int32_t *dataTable = NULL;
    int64_t *dataTable64 = NULL;
-   intptr_t  address = NULL;
+   intptr_t address = 0;
    if (isInt64)
       {
       dataTableSize *= 2;

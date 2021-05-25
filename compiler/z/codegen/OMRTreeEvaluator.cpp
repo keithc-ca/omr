@@ -6705,12 +6705,12 @@ bool relativeLongLoadHelper(TR::CodeGenerator * cg, TR::Node * node, TR::Registe
    {
    static char * disableFORCELRL = feGetEnv("TR_DISABLEFORCELRL");
 
-   if(!node->getOpCode().hasSymbolReference())
+   if (!node->getOpCode().hasSymbolReference())
       return false;
 
    TR::SymbolReference * symRef = node->getSymbolReference();
    TR::Symbol * symbol = symRef->getSymbol();
-   uintptr_t staticAddress = symbol->isStatic() ? (uintptr_t)symRef->getSymbol()->getStaticSymbol()->getStaticAddress() : NULL;
+   uintptr_t staticAddress = symbol->isStatic() ? (uintptr_t)symRef->getSymbol()->getStaticSymbol()->getStaticAddress() : 0;
 
    if (symbol->isStatic() &&
        !symRef->isUnresolved() &&
@@ -7055,7 +7055,7 @@ bool relativeLongStoreHelper(TR::CodeGenerator * cg, TR::Node * node, TR::Node *
    {
    TR::SymbolReference * symRef = node->getSymbolReference();
    TR::Symbol * symbol = symRef->getSymbol();
-   uintptr_t staticAddress = symbol->isStatic() ? (uintptr_t)symRef->getSymbol()->getStaticSymbol()->getStaticAddress() : NULL;
+   uintptr_t staticAddress = symbol->isStatic() ? (uintptr_t)symRef->getSymbol()->getStaticSymbol()->getStaticAddress() : 0;
 
    if (symbol->isStatic() &&
        !symRef->isUnresolved() &&

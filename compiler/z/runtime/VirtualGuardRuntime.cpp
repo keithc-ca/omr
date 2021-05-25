@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,7 +26,7 @@
 #include "compile/Compilation.hpp"
 #include "env/jittypes.h"
 #include "infra/Assert.hpp"
-
+#include "omrformatconsts.h"
 
 /** \brief
   *    Encode a BRC / BRCL at \p locationAddr to branch to \p destinationAddr.
@@ -53,7 +53,10 @@ extern "C" void _patchVirtualGuard(uint8_t* locationAddr, uint8_t* destinationAd
 
    if (debugTrace)
       {
-      printf("####> Patching VGNOP at locationAddr %p (%x), destinationAddr %p (%x), smpFlag: %d\n", volatileLocationAddr, *reinterpret_cast<volatile intptr_t*>(volatileLocationAddr), destinationAddr, *reinterpret_cast<intptr_t*>(destinationAddr), smpFlag);
+      printf("####> Patching VGNOP at locationAddr %p (%" OMR_PRIxPTR "), destinationAddr %p (%" OMR_PRIxPTR "), smpFlag: %" OMR_PRId32 "\n",
+         volatileLocationAddr, *reinterpret_cast<volatile intptr_t*>(volatileLocationAddr),
+         destinationAddr, *reinterpret_cast<intptr_t*>(destinationAddr),
+         smpFlag);
       }
 
    int64_t displacement = static_cast<int64_t>(destinationAddr - volatileLocationAddr) / 2;

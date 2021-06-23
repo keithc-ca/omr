@@ -161,10 +161,10 @@ static void convertUTCMillisToJ9Time(int64_t millisUTC, struct J9TimeInfo *tm, u
 static void setJ9TimeToEpoch(struct J9TimeInfo *tm);
 static uint32_t omrstr_subst_time(struct OMRPortLibrary *portLibrary, char *buf, uint32_t bufLen, const char *format, int64_t timeMillis, uint32_t flags);
 static intptr_t omrstr_set_token_from_buf(struct OMRPortLibrary *portLibrary, struct J9StringTokens *tokens, const char *key, char *tokenBuf, uint32_t tokenLen);
-static int32_t convertPlatformToMutf8(struct OMRPortLibrary *portLibrary, uint32_t codePage, const uint8_t *inBuffer, uintptr_t inBufferSize, uint8_t *outBuffer, uintptr_t outBufferSize);
+static int32_t convertPlatformToMutf8(struct OMRPortLibrary *portLibrary, uint32_t codePage, const char *inBuffer, uintptr_t inBufferSize, char *outBuffer, uintptr_t outBufferSize);
 static int32_t convertMutf8ToPlatform(struct OMRPortLibrary *portLibrary, uint32_t codePage, const uint8_t *inBuffer, uintptr_t inBufferSize, uint8_t *outBuffer, uintptr_t outBufferSize);
 static int32_t convertWideToMutf8(const uint8_t **inBuffer, uintptr_t *inBufferSize, uint8_t *outBuffer, uintptr_t outBufferSize);
-static int32_t convertUtf8ToMutf8(struct OMRPortLibrary *portLibrary, const uint8_t **inBuffer, uintptr_t *inBufferSize, uint8_t *outBuffer, uintptr_t outBufferSize);
+static int32_t convertUtf8ToMutf8(struct OMRPortLibrary *portLibrary, const char **inBuffer, uintptr_t *inBufferSize, char *outBuffer, uintptr_t outBufferSize);
 static int32_t convertPlatformToUtf8(struct OMRPortLibrary *portLibrary, const uint8_t *inBuffer, uintptr_t inBufferSize, uint8_t *outBuffer, uintptr_t outBufferSize);
 static int32_t convertMutf8ToWide(const uint8_t **inBuffer, uintptr_t *inBufferSize, uint8_t *outBuffer, uintptr_t outBufferSize);
 static int32_t convertPlatformToWide(struct OMRPortLibrary *portLibrary, charconvState_t encodingState, uint32_t codePage, const uint8_t **inBuffer, uintptr_t *inBufferSize, uint8_t *outBuffer, uintptr_t outBufferSize);
@@ -246,7 +246,7 @@ omrstr_printf(struct OMRPortLibrary *portLibrary, char *buf, uintptr_t bufLen, c
 #endif
 int32_t
 omrstr_convert(struct OMRPortLibrary *portLibrary, int32_t fromCode, int32_t toCode,
-			   uint8_t *inBuffer, uintptr_t inBufferSize, uint8_t *outBuffer, uintptr_t outBufferSize)
+	const char *inBuffer, uintptr_t inBufferSize, char *outBuffer, uintptr_t outBufferSize)
 {
 	int32_t result = OMRPORT_ERROR_STRING_UNSUPPORTED_ENCODING;
 
@@ -260,7 +260,7 @@ omrstr_convert(struct OMRPortLibrary *portLibrary, int32_t fromCode, int32_t toC
 			result = OMRPORT_ERROR_STRING_UNSUPPORTED_ENCODING;
 			break;
 		case J9STR_CODE_UTF8:
-			result = convertPlatformToUtf8(portLibrary, (const uint8_t*)inBuffer, inBufferSize, outBuffer, outBufferSize);
+			result = convertPlatformToUtf8(portLibrary, inBuffer, inBufferSize, outBuffer, outBufferSize);
 			break;
 		default:
 			result = OMRPORT_ERROR_STRING_UNSUPPORTED_ENCODING;
@@ -2150,7 +2150,8 @@ omrstr_subst_time(struct OMRPortLibrary *portLibrary, char *buf, uint32_t bufLen
  * @return number of bytes generated, or required size of output buffer if outBufferSize is 0. Negative error code on failure.
  */
 static int32_t
-convertPlatformToMutf8(struct OMRPortLibrary *portLibrary, uint32_t codePage, const uint8_t *inBuffer, uintptr_t inBufferSize, uint8_t *outBuffer, uintptr_t outBufferSize)
+convertPlatformToMutf8(struct OMRPortLibrary *portLibrary, uint32_t codePage,
+		const char *inBuffer, uintptr_t inBufferSize, char *outBuffer, uintptr_t outBufferSize)
 {
 	uint8_t onStackBuffer[CONVERSION_BUFFER_SIZE];
 	uint8_t *wideBuffer = onStackBuffer;
@@ -2609,7 +2610,7 @@ checkAndCopyUtfBytes(const uint8_t *utf8Bytes, uintptr_t numBytes, uint8_t *mutf
  * @note callers are responsible for detecting buffer overflow
  */
 static int32_t
-convertUtf8ToMutf8(struct OMRPortLibrary *portLibrary, const uint8_t **inBuffer, uintptr_t *inBufferSize, uint8_t *outBuffer, uintptr_t outBufferSize)
+convertUtf8ToMutf8(struct OMRPortLibrary *portLibrary, const char **inBuffer, uintptr_t *inBufferSize, char *outBuffer, uintptr_t outBufferSize)
 {
 	BOOLEAN lengthOnly = (0 == outBufferSize);
 	const uint8_t *utf8Buffer = *inBuffer;

@@ -1,19 +1,19 @@
 ###############################################################################
 # Copyright IBM Corp. and others 2015
-# 
+#
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
 # distribution and is available at https://www.eclipse.org/legal/epl-2.0/
 # or the Apache License, Version 2.0 which accompanies this distribution and
 # is available at https://www.apache.org/licenses/LICENSE-2.0.
-#      
+#
 # This Source Code may also be made available under the following
 # Secondary Licenses when the conditions for such availability set
 # forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
 # General Public License, version 2 with the GNU Classpath
 # Exception [1] and GNU General Public License, version 2 with the
 # OpenJDK Assembly Exception [2].
-#    
+#
 # [1] https://www.gnu.org/software/classpath/license.html
 # [2] https://openjdk.org/legal/assembly-exception.html
 #
@@ -41,8 +41,9 @@ ifeq (aix,$(OMR_HOST_OS))
 endif
 
 ifeq (zos,$(OMR_HOST_OS))
-  # 31- and 64-bit
+  # 31-bit and 64-bit
   OBJECTS += omrgenerate_ieat_dump
+  OBJECTS += omrgenerate_ieat_dumpv
   OBJECTS += omrget_large_pageable_pages_supported
   OBJECTS += omrwto
   OBJECTS += omrpgser_release
@@ -91,12 +92,10 @@ endif
 ifeq ($(OMR_HOST_ARCH),$(filter $(OMR_HOST_ARCH),s390 s390x))
   ifeq ($(OMR_HOST_OS),$(filter $(OMR_HOST_OS),linux linux_ztpf))
     OBJECTS += omrgetstfle
+  else ifeq (1,$(OMR_ENV_DATA64))
+    OBJECTS += omrgetstfle64
   else
-    ifeq (1,$(OMR_ENV_DATA64))
-      OBJECTS += omrgetstfle64
-    else
-      OBJECTS += omrgetstfle31
-    endif
+    OBJECTS += omrgetstfle31
   endif
 endif
 
@@ -168,7 +167,7 @@ ifneq (win,$(OMR_HOST_OS))
   OBJECTS += omrsysv_ipcwrappers
   OBJECTS += omrsharedhelper
   OBJECTS += omrshsem
-  OBJECTS += omrshsem_deprecated 
+  OBJECTS += omrshsem_deprecated
   OBJECTS += omrshmem
 endif
 ifeq (aix,$(OMR_HOST_OS))
@@ -226,7 +225,6 @@ ifeq (win,$(OMR_HOST_OS))
   ifeq (1,$(OMR_ENV_DATA64))
     vpath % $(PORT_SRCDIR)win64amd
     MODULE_INCLUDES += $(PORT_SRCDIR)winamd64
-  else
   endif
 endif
 ifeq (aix,$(OMR_HOST_OS))
@@ -242,11 +240,11 @@ ifeq (aix,$(OMR_HOST_OS))
   ifeq (1,$(OMR_ENV_DATA64))
     vpath % $(PORT_SRCDIR)aix64
     MODULE_INCLUDES += $(PORT_SRCDIR)aix64
-  else
   endif
   vpath % $(PORT_SRCDIR)aix
   MODULE_INCLUDES += $(PORT_SRCDIR)aix
 endif
+
 ifeq ($(OMR_HOST_OS),$(filter $(OMR_HOST_OS),linux linux_ztpf))
   ifeq (ppc,$(OMR_HOST_ARCH))
     ifeq (1,$(OMR_ENV_DATA64))
@@ -279,7 +277,7 @@ ifeq ($(OMR_HOST_OS),$(filter $(OMR_HOST_OS),linux linux_ztpf))
     vpath % $(PORT_SRCDIR)linuxarm
     MODULE_INCLUDES += $(PORT_SRCDIR)linuxarm
   endif
-  
+
   ifeq (aarch64,$(OMR_HOST_ARCH))
     vpath % $(PORT_SRCDIR)linuxaarch64
     MODULE_INCLUDES += $(PORT_SRCDIR)linuxaarch64
@@ -293,7 +291,7 @@ ifeq ($(OMR_HOST_OS),$(filter $(OMR_HOST_OS),linux linux_ztpf))
     vpath % $(PORT_SRCDIR)linux386
     MODULE_INCLUDES += $(PORT_SRCDIR)linux386
   endif
-  
+
   ifeq (riscv,$(OMR_HOST_ARCH))
     ifeq (1,$(OMR_ENV_DATA64))
       vpath % $(PORT_SRCDIR)linuxriscv64
@@ -341,7 +339,7 @@ MODULE_INCLUDES += $(PORT_SRCDIR)
 ## DEPENDENCIES
 
 ifeq (win,$(OMR_HOST_OS))
-omrsyslog.obj: omrsyslogmessages.res
+omrsyslog.obj : omrsyslogmessages.res
 endif
 
 ifeq (linux,$(OMR_HOST_OS))
@@ -356,12 +354,12 @@ ifeq (linux,$(OMR_HOST_OS))
     ifeq (xlc,$(OMR_TOOLCHAIN))
 # Suppress xlc warning:
 # "unix/auxv.c", line 66.21: 1506-1385 (W) The attribute "noinline" is not a valid type attribute.I
-auxv.o: MODULE_CFLAGS+=-qsuppress=1506-1385
+auxv.o : MODULE_CFLAGS += -qsuppress=1506-1385
 
 # Suppress xlc warnings:
 # "/usr/include/linux/kernel.h", line 42.9: 1506-312 (W) Compiler internal name __FUNCTION__ has been defined as a macro.
 # "/usr/include/linux/kernel.h", line 42.9: 1506-236 (W) Macro name __FUNCTION__ has been redefined.
-omrsysinfo.o: MODULE_CFLAGS+=-qsuppress=1506-236:1506-312
+omrsysinfo.o : MODULE_CFLAGS += -qsuppress=1506-236:1506-312
     endif
   endif
 endif
@@ -375,6 +373,6 @@ ifeq (1,$(OMR_OPT_CUDA))
     CUDA_HOME ?= /usr/local/cuda-5.5
   endif
 
-omrcuda$(OBJEXT) : MODULE_INCLUDES += $(CUDA_HOME)/include
-omrcuda.i : MODULE_INCLUDES += $(CUDA_HOME)/include
+  omrcuda$(OBJEXT) : MODULE_INCLUDES += $(CUDA_HOME)/include
+  omrcuda.i : MODULE_INCLUDES += $(CUDA_HOME)/include
 endif

@@ -79,6 +79,7 @@ if(OMR_OS_ZOS)
 
 	list(APPEND OBJECTS
 		omrgenerate_ieat_dump.s
+		omrgenerate_ieat_dumpv.s
 		omrget_large_pageable_pages_supported.s
 		omrwto.s
 		omrpgser_release.s

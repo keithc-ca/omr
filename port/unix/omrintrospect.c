@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -127,8 +127,6 @@ struct PlatformWalkData {
 	struct sigaction oldHandler;
 	/* old mask */
 	sigset_t old_mask;
-	/* backpointer to encapsulating state */
-	J9ThreadWalkState *state;
 	/* total number of threads in the process, including calling thread */
 	long threadCount;
 	/* suspended threads unharvested */
@@ -195,9 +193,11 @@ barrier_init_r(barrier_r *barrier, int value)
 	do {
 		old_value = barrier->initial_value;
 	} while (compareAndSwapUDATA((uintptr_t *)&barrier->initial_value, old_value, value) != old_value);
+
 	do {
 		old_value = barrier->in_count;
 	} while (compareAndSwapUDATA((uintptr_t *)&barrier->in_count, old_value, value) != old_value);
+
 	do {
 		old_value = barrier->released;
 	} while (compareAndSwapUDATA((uintptr_t *)&barrier->released, old_value, 0) != old_value);
@@ -284,6 +284,8 @@ barrier_release_r(barrier_r *barrier, uintptr_t seconds)
 
 	int deadline = 0;
 	struct timespec spec;
+
+	// FIXME use omrtime_hires_clock() & omrtime_hires_delta() instead of clock_gettime()
 
 	if (clock_gettime(CLOCK_REALTIME, &spec) == -1) {
 		seconds = 0;
@@ -700,18 +702,10 @@ timeout(uintptr_t deadline)
 
 #if defined(J9OS_I5)
 void
-get_thread_Info(struct PlatformWalkData *data, void *context_arg, unsigned long tid)
+get_thread_Info(J9ThreadWalkState *state, void *context_arg, unsigned long tid)
 {
 	thread_context *context = (thread_context *)context_arg;
-	J9ThreadWalkState *state;
-	J9PlatformThread *thread;
-	char buf;
-	int ret = 0;
-	int i = 0;
-	pid_t pid = getpid();
-	int64_t deadline;
-
-	state = data->state;
+	struct PlatformWalkData *data = state->platform_data;
 
 	/* construct the thread to pass back */
 	data->thread = state->portLibrary->heap_allocate(state->portLibrary, state->heap, sizeof(J9PlatformThread));
@@ -748,7 +742,7 @@ static void
 upcall_handler(int signal, siginfo_t *siginfo, void *context_arg)
 {
 	thread_context *context = (thread_context *)context_arg;
-	J9ThreadWalkState *state;
+	J9ThreadWalkState *state = NULL;
 	struct PlatformWalkData *data = NULL;
 	int ret = 0;
 	pid_t pid = getpid();
@@ -758,32 +752,32 @@ upcall_handler(int signal, siginfo_t *siginfo, void *context_arg)
 	struct sigaction handler;
 
 	/* altering the signal handler doesn't affect already queued signals on AIX */
-	if (sigaction(SUSPEND_SIG, NULL, &handler) == -1 || handler.sa_sigaction != upcall_handler) {
+	if ((-1 == sigaction(SUSPEND_SIG, NULL, &handler)) || (handler.sa_sigaction != upcall_handler)) {
 		return;
 	}
 #endif
 
 	/* check that this signal was queued by this process. */
-	if (siginfo->si_code != SI_QUEUE || siginfo->si_value.sival_ptr == NULL
+	if ((SI_QUEUE != siginfo->si_code) || (NULL == siginfo->si_value.sival_ptr)
 #ifndef J9ZOS390
 		/* pid is only valid on zOS if si_code <= 0. SI_QUEUE is > 0 */
-		|| siginfo->si_pid != pid
+		|| (siginfo->si_pid != pid)
 #endif
 	) {
 		/* these are not the signals you are looking for */
 		return;
 	}
 
-	data = (struct PlatformWalkData *)siginfo->si_value.sival_ptr;
-	state = data->state;
+	state = (struct J9ThreadWalkState *)siginfo->si_value.sival_ptr;
+	data = state->platform_data;
 
 	/* ignore the signal if we are the controller thread, or if an error/timeout has already occurred */
-	if (data->controllerThread == tid || data->error) {
+	if ((data->controllerThread == tid) || data->error) {
 		return;
 	}
 
 	/* block until a context is requested, ignoring interrupts */
-	ret = sem_timedwait_r(&data->client_sem, timeout(data->state->deadline1));
+	ret = sem_timedwait_r(&data->client_sem, timeout(state->deadline1));
 
 	if (ret != 0) {
 		/* error or timeout in sem_timedwait_r(), set shared error flag and don't do the backtrace */
@@ -825,7 +819,7 @@ upcall_handler(int signal, siginfo_t *siginfo, void *context_arg)
 	sem_post_r(&data->controller_sem);
 
 	/* wait for the controller to close the pipe */
-	ret = barrier_enter_r(&data->release_barrier, data->state->deadline2);
+	ret = barrier_enter_r(&data->release_barrier, state->deadline2);
 	if (ret != 0) {
 		/* timeout or error */
 		data->error = ret;
@@ -897,9 +891,11 @@ count_threads(struct PlatformWalkData *data)
 		closedir(proc);
 
 		/* add 1 to account for the initial thread */
-		thread_count++;
+		thread_count += 1;
 	} else {
-		for (thread_count = 0; readdir(tids) != NULL; thread_count++);
+		for (thread_count = 0; readdir(tids) != NULL;) {
+			thread_count += 1;
+		}
 		/* remove the count for . and .. */
 		thread_count -= 2;
 
@@ -918,7 +914,7 @@ count_threads(struct PlatformWalkData *data)
 {
 	struct thrdentry64 thread;
 	tid64_t cursor = 0;
-	unsigned int count = 0;
+	int count = 0;
 
 	while (getthrds64(getpid(), &thread, sizeof(struct thrdentry64), &cursor, 1) == 1) {
 		/* we don't want to count threads that are being disposed of or are pooled for reuse.
@@ -926,7 +922,7 @@ count_threads(struct PlatformWalkData *data)
 		 * so those are included.
 		 */
 		if (thread.ti_state != TSNONE && thread.ti_state != TSZOMB) {
-			count++;
+			count += 1;
 			if (thread.ti_state == TSIDL) {
 				data->uninitializedThreads++;
 			}
@@ -943,7 +939,9 @@ count_threads(struct PlatformWalkData *data)
 	int output_size = sizeof(struct pgthb) + sizeof(struct pgthc) + 200;
 	char *output_buffer = (char *)alloca(output_size);
 	int input_size = sizeof(struct pgtha);
-	int ret_val, ret_code, reason_code;
+	int ret_val = 0;
+	int ret_code = 0;
+	int reason_code = 0;
 	unsigned int data_offset = 0;
 	struct pgtha pgtha;
 	struct pgtha *cursor = &pgtha;
@@ -1002,14 +1000,15 @@ count_threads(struct PlatformWalkData *data)
  * @return the number of threads suspended
  */
 static int
-suspend_all_preemptive(struct PlatformWalkData *data)
+suspend_all_preemptive(J9ThreadWalkState *state)
 {
+	struct PlatformWalkData *data = state->platform_data;
 #if !defined(J9OS_I5)
 	struct sigaction upcall_action;
 	pid_t pid = getpid();
 	int thread_count = 0;
 #if defined(OMR_CONFIGURABLE_SUSPEND_SIGNAL)
-	struct OMRPortLibrary *portLibrary = data->state->portLibrary;
+	struct OMRPortLibrary *portLibrary = state->portLibrary;
 #endif /* defined(OMR_CONFIGURABLE_SUSPEND_SIGNAL) */
 	upcall_action.sa_sigaction = upcall_handler;
 	upcall_action.sa_flags = SA_SIGINFO | SA_RESTART;
@@ -1020,7 +1019,7 @@ suspend_all_preemptive(struct PlatformWalkData *data)
 	/* install the signal handler */
 	if (sigaction(SUSPEND_SIG, &upcall_action, &data->oldHandler) == -1) {
 		/* no solution but to bail if we can't install the handler */
-		RECORD_ERROR(data->state, SIGNAL_SETUP_ERROR, -1);
+		RECORD_ERROR(state, SIGNAL_SETUP_ERROR, -1);
 		return -1;
 	}
 
@@ -1029,7 +1028,7 @@ suspend_all_preemptive(struct PlatformWalkData *data)
 		 * while cleaning as the thread that installed the initial handler will do so
 		 */
 		memset(&data->oldHandler, 0, sizeof(struct sigaction));
-		RECORD_ERROR(data->state, CONCURRENT_COLLECTION, -1);
+		RECORD_ERROR(state, CONCURRENT_COLLECTION, -1);
 		return -1;
 	}
 
@@ -1038,7 +1037,7 @@ suspend_all_preemptive(struct PlatformWalkData *data)
 
 	thread_count = count_threads(data);
 	if (thread_count < 1) {
-		RECORD_ERROR(data->state, THREAD_COUNT_FAILURE, -2);
+		RECORD_ERROR(state, THREAD_COUNT_FAILURE, -2);
 		return -2;
 	}
 
@@ -1050,7 +1049,7 @@ suspend_all_preemptive(struct PlatformWalkData *data)
 	do {
 		int i = 0;
 		union sigval val;
-		val.sival_ptr = data;
+		val.sival_ptr = state;
 
 		/* fire off enough signals to pause all threads in the process barring us */
 		for (i = data->threadCount; i < thread_count - 1; i++) {
@@ -1059,7 +1058,7 @@ suspend_all_preemptive(struct PlatformWalkData *data)
 			if (0 != ret) {
 				if (errno == EAGAIN) {
 					/* retry the queuing until we time out */
-					while ((0 != ret) && (EAGAIN == errno) && !timedOut(data->state->deadline1)) {
+					while ((0 != ret) && (EAGAIN == errno) && !timedOut(state->deadline1)) {
 						omrthread_yield();
 						ret = sigqueue(pid, SUSPEND_SIG, val);
 					}
@@ -1094,7 +1093,7 @@ suspend_all_preemptive(struct PlatformWalkData *data)
 		} else if (data->threadCount > thread_count) {
 			/* threads exited in between us counting and generating signals, so swallow the surplus */
 			sigset_t set;
-			int sig;
+			int sig = 0;
 
 			for (i = 0; i < data->threadCount - thread_count; i++) {
 				/* sanity check that there is a signal on the queue for us */
@@ -1114,9 +1113,9 @@ suspend_all_preemptive(struct PlatformWalkData *data)
 			data->threadCount = thread_count;
 			break;
 		}
-	} while (!timedOut(data->state->deadline1));
+	} while (!timedOut(state->deadline1));
 
-	if (timedOut(data->state->deadline1)) {
+	if (timedOut(state->deadline1)) {
 		data->threadsOutstanding = data->threadCount - 1;
 		return -5;
 	}
@@ -1136,7 +1135,7 @@ suspend_all_preemptive(struct PlatformWalkData *data)
 	data->cleanupRequired = 1;
 	thread_count = count_threads(data);
 	if (thread_count < 1) {
-		RECORD_ERROR(data->state, THREAD_COUNT_FAILURE, -2);
+		RECORD_ERROR(state, THREAD_COUNT_FAILURE, -2);
 		return -2;
 	}
 
@@ -1146,9 +1145,7 @@ suspend_all_preemptive(struct PlatformWalkData *data)
 		do {
 			ret = pthread_getthrds_np(&thr, PTHRDSINFO_QUERY_TID, &pinfo, sizeof(pinfo), regbuf, &val);
 			if (ret != 0) {
-				if (ret == ESRCH) {
-
-				} else {
+				if (ret != ESRCH) {
 					data->threadsOutstanding = i;
 					return -ret;
 				}
@@ -1188,9 +1185,9 @@ suspend_all_preemptive(struct PlatformWalkData *data)
 			/* threads created in between us counting and suspend threads, re-counting and suspend again */
 		}
 
-	} while (!timedOut(data->state->deadline1));
+	} while (!timedOut(state->deadline1));
 
-	if (timedOut(data->state->deadline1)) {
+	if (timedOut(state->deadline1)) {
 		data->threadsOutstanding = data->threadCount - 1;
 		return -5;
 	}
@@ -1206,8 +1203,8 @@ suspend_all_preemptive(struct PlatformWalkData *data)
 static void
 freeThread(J9ThreadWalkState *state, J9PlatformThread *thread)
 {
-	J9PlatformStackFrame *frame;
-	struct PlatformWalkData *data = (struct PlatformWalkData *)state->platform_data;
+	J9PlatformStackFrame *frame = NULL;
+	struct PlatformWalkData *data = state->platform_data;
 
 	if (thread == NULL) {
 		return;
@@ -1249,12 +1246,12 @@ freeThread(J9ThreadWalkState *state, J9PlatformThread *thread)
  * @param data - platform specific control data used during suspend/resume
  */
 static void
-resume_all_preempted(struct PlatformWalkData *data)
+resume_all_preempted(J9ThreadWalkState *state)
 {
+	struct PlatformWalkData *data = state->platform_data;
 #if !defined(J9OS_I5)
 	sigset_t set;
 	struct timespec time_out;
-	J9ThreadWalkState *state = data->state;
 
 	/* We skip everything but the semaphores and the process mask if we didn't sucessfully install the
 	 * signal handlers.
@@ -1290,7 +1287,7 @@ resume_all_preempted(struct PlatformWalkData *data)
 
 	if (data->cleanupRequired) {
 #if defined(OMR_CONFIGURABLE_SUSPEND_SIGNAL)
-		struct OMRPortLibrary *portLibrary = data->state->portLibrary;
+		struct OMRPortLibrary *portLibrary = state->portLibrary;
 #endif /* defined(OMR_CONFIGURABLE_SUSPEND_SIGNAL) */
 		/* clear out the signal queue so that any undispatched suspend signals are not left lying around */
 		while (sigpending(&set) == 0 && sigismember(&set, SUSPEND_SIG)) {
@@ -1324,7 +1321,7 @@ resume_all_preempted(struct PlatformWalkData *data)
 		sigaction(SUSPEND_SIG, &data->oldHandler, NULL);
 
 		/* release the threads from the upcall handler */
-		barrier_release_r(&data->release_barrier, timeout(data->state->deadline2));
+		barrier_release_r(&data->release_barrier, timeout(state->deadline2));
 		/* make sure they've all exited. 1 means we block until all threads that have entered the barrier leave */
 		if (0 != barrier_destroy_r(&data->release_barrier, 1)) {
 			RECORD_ERROR(state, RESUME_FAILURE, -1);
@@ -1339,21 +1336,21 @@ resume_all_preempted(struct PlatformWalkData *data)
 	sem_destroy_r(&data->client_sem);
 	sem_destroy_r(&data->controller_sem);
 
-	if (data->state->current_thread != NULL) {
-		freeThread(data->state, data->state->current_thread);
+	if (state->current_thread != NULL) {
+		freeThread(state, state->current_thread);
 	}
 
 	/* restore the mask for this thread */
 	sigprocmask(SIG_SETMASK, &data->old_mask, NULL);
 
 	/* clean up the heap */
-	data->state->portLibrary->heap_free(data->state->portLibrary, data->state->heap, data);
+	state->portLibrary->heap_free(state->portLibrary, state->heap, data);
 	state->platform_data = NULL;
 
 #else /* !defined(J9OS_I5) */
 
 	sigset_t set;
-	int sig;
+	int sig = 0;
 	int i = 0;
 	struct __pthrdsinfo pinfo;
 	int regbuf[64];
@@ -1371,17 +1368,17 @@ resume_all_preempted(struct PlatformWalkData *data)
 		ret = pthread_continue_np(thr);
 #if 0
 		if (ret) {
-			return ;
+			return;
 		}
 #endif
 	}
 
-	if (data->state->current_thread != NULL) {
-		freeThread(data->state, data->state->current_thread);
+	if (state->current_thread != NULL) {
+		freeThread(state, state->current_thread);
 	}
 
 	/* clean up the heap */
-	data->state->portLibrary->heap_free(data->state->portLibrary, data->state->heap, data);
+	state->portLibrary->heap_free(state->portLibrary, state->heap, data);
 	state->platform_data = NULL;
 
 #endif /* !defined(J9OS_I5) */
@@ -1399,7 +1396,7 @@ resume_all_preempted(struct PlatformWalkData *data)
 static int
 setup_native_thread(J9ThreadWalkState *state, thread_context *sigContext, int heapAllocate)
 {
-	struct PlatformWalkData *data = (struct PlatformWalkData *)state->platform_data;
+	struct PlatformWalkData *data = state->platform_data;
 	int size = sizeof(thread_context);
 
 	if (size < sizeof(ucontext_t)) {
@@ -1490,7 +1487,10 @@ setup_native_thread(J9ThreadWalkState *state, thread_context *sigContext, int he
 static uintptr_t
 sigqueue_is_reliable(void)
 {
-#if defined(LINUX)
+#if defined(AIXPPC) || defined(J9ZOS390)
+	/* The controller can't use sem_timedwait_r() on AIX or z/OS. */
+	return 0;
+#elif defined(LINUX) /* defined(AIXPPC) || defined(J9ZOS390) */
 	struct utsname sysinfo;
 	uintptr_t release_major = 0;
 	uintptr_t release_minor = 0;
@@ -1504,13 +1504,10 @@ sigqueue_is_reliable(void)
 
 	/* sigqueue() is sufficiently reliable on newer Linux kernels (version 3.11 and later). */
 	return (3 < release_major) || ((3 == release_major) && (11 <= release_minor));
-#elif defined(AIXPPC) || defined(J9ZOS390)
-	/* The controller can't use sem_timedwait_r on AIX or z/OS. */
-	return 0;
-#else
+#else /* defined(LINUX) */
 	/* Other platforms can use sem_timedwait_r. */
 	return 1;
-#endif /* defined(LINUX) */
+#endif /* defined(AIXPPC) || defined(J9ZOS390) */
 }
 
 /*
@@ -1539,11 +1536,11 @@ J9PlatformThread *
 omrintrospect_threads_startDo_with_signal(struct OMRPortLibrary *portLibrary, J9Heap *heap, J9ThreadWalkState *state, void *signal_info)
 {
 	int result = 0;
-	struct PlatformWalkData *data;
+	struct PlatformWalkData *data = NULL;
 	J9PlatformThread thread;
 	sigset_t mask;
 	int suspend_result = 0;
-	int flag;
+	int flag = 0;
 
 #ifdef ZOS64
 	RECORD_ERROR(state, UNSUPPORT_PLATFORM, 0);
@@ -1557,13 +1554,12 @@ omrintrospect_threads_startDo_with_signal(struct OMRPortLibrary *portLibrary, J9
 	state->platform_data = data;
 	state->current_thread = NULL;
 
-	if (!data) {
+	if (NULL == data) {
 		RECORD_ERROR(state, ALLOCATION_FAILURE, 0);
 		return NULL;
 	}
 
 	memset(data, 0, sizeof(struct PlatformWalkData));
-	data->state = state;
 	data->controllerThread = omrthread_get_ras_tid();
 
 	memset(&thread, 0, sizeof(J9PlatformThread));
@@ -1610,7 +1606,7 @@ omrintrospect_threads_startDo_with_signal(struct OMRPortLibrary *portLibrary, J9
 #endif /* !defined(J9OS_I5) */
 
 	/* suspend all threads bar this one */
-	suspend_result = suspend_all_preemptive(state->platform_data);
+	suspend_result = suspend_all_preemptive(state);
 	if (suspend_result < 0) {
 		RECORD_ERROR(state, SUSPEND_FAILURE, suspend_result);
 #if !defined(J9OS_I5)
@@ -1647,7 +1643,7 @@ omrintrospect_threads_startDo_with_signal(struct OMRPortLibrary *portLibrary, J9
 	return state->current_thread;
 
 cleanup:
-	resume_all_preempted(data);
+	resume_all_preempted(state);
 	return NULL;
 }
 
@@ -1671,7 +1667,7 @@ omrintrospect_threads_startDo(struct OMRPortLibrary *portLibrary, J9Heap *heap, 
 J9PlatformThread *
 omrintrospect_threads_nextDo(J9ThreadWalkState *state)
 {
-	struct PlatformWalkData *data = (struct PlatformWalkData *)state->platform_data;
+	struct PlatformWalkData *data = state->platform_data;
 #if defined(OMR_CONFIGURABLE_SUSPEND_SIGNAL)
 	struct OMRPortLibrary *portLibrary = state->portLibrary;
 #endif /* defined(OMR_CONFIGURABLE_SUSPEND_SIGNAL) */
@@ -1679,7 +1675,8 @@ omrintrospect_threads_nextDo(J9ThreadWalkState *state)
 	J9PlatformThread *thread = NULL;
 	int result = 0;
 #if !defined(J9OS_I5)
-	sigset_t mask, old_mask;
+	sigset_t mask;
+	sigset_t old_mask;
 #else /* !defined(J9OS_I5) */
 	int regbuf[64];
 	int val = sizeof(regbuf);
@@ -1715,17 +1712,17 @@ omrintrospect_threads_nextDo(J9ThreadWalkState *state)
 	/* cleanup the previous threads */
 	freeThread(state, state->current_thread);
 
-#if !defined(J9OS_I5)
-	if (data->threadsOutstanding <= 0) {
-#else /* !defined(J9OS_I5) */
-	if ((data->threadsOutstanding <= 0) || (data->threadsOutstanding != data->threadCount - 1) && (data->thr == 0)) {
-#endif /* !defined(J9OS_I5) */
+	if ((data->threadsOutstanding <= 0)
+#if defined(J9OS_I5)
+	|| ((data->threadsOutstanding != (data->threadCount - 1)) && (data->thr == 0))
+#endif /* defined(J9OS_I5) */
+	) {
 		/* we've finished processing threads */
 		goto cleanup;
 	}
 
 	/* record that we've processed one of the suspended threads */
-	data->threadsOutstanding--;
+	data->threadsOutstanding -= 1;
 
 #if !defined(J9OS_I5)
 	/* solicit the next thread context */
@@ -1733,18 +1730,18 @@ omrintrospect_threads_nextDo(J9ThreadWalkState *state)
 
 	if (result == -1 || data->error) {
 		/* failed to solicit thread context */
-		RECORD_ERROR(state, COLLECTION_FAILURE, result == -1? -1 : data->error);
+		RECORD_ERROR(state, COLLECTION_FAILURE, result == -1 ? -1 : data->error);
 		goto cleanup;
 	}
 
 	if (sigqueue_is_reliable()) {
-		result = sem_timedwait_r(&data->controller_sem, timeout(data->state->deadline1));
+		result = sem_timedwait_r(&data->controller_sem, timeout(state->deadline1));
 	} else {
 		for (;;) {
 			result = sem_trywait_r(&data->controller_sem);
 			if (0 == result) {
 				break;
-			} else if (timedOut(data->state->deadline1) || data->error) {
+			} else if (timedOut(state->deadline1) || data->error) {
 				break;
 			} else {
 				union sigval val;
@@ -1769,7 +1766,6 @@ omrintrospect_threads_nextDo(J9ThreadWalkState *state)
 		}
 		goto cleanup;
 	}
-
 #else /* !defined(J9OS_I5) */
 	while (data->thr == pthread_self() || data->thr == 0) {
 		if ((result = pthread_getthrds_np(&data->thr, PTHRDSINFO_QUERY_TID, &data->pinfo, sizeof(data->pinfo), regbuf, &val)) != 0) {
@@ -1793,9 +1789,7 @@ omrintrospect_threads_nextDo(J9ThreadWalkState *state)
 #endif /* !defined(J9OS_I5) */
 
 	thread = data->thread;
-
 	thread->process_id = getpid();
-
 	data->consistent = 1;
 
 	result = setup_native_thread(state, NULL, 0);
@@ -1807,7 +1801,7 @@ omrintrospect_threads_nextDo(J9ThreadWalkState *state)
 	return state->current_thread;
 
 cleanup:
-	resume_all_preempted(data);
+	resume_all_preempted(state);
 	return NULL;
 }
 

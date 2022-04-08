@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -107,8 +107,6 @@ struct PlatformWalkData {
 	struct sigaction oldHandler;
 	/* old mask */
 	sigset_t old_mask;
-	/* backpointer to encapsulating state */
-	J9ThreadWalkState *state;
 	/* total number of threads in the process, including calling thread */
 	long threadCount;
 	/* suspended threads unharvested */
@@ -1231,7 +1229,7 @@ omrintrospect_set_suspend_signal_offset(struct OMRPortLibrary *portLibrary, int3
 int32_t
 omrintrospect_startup(struct OMRPortLibrary *portLibrary)
 {
-        loadfpc();
+	loadfpc();
 
 #if defined(J9_CONFIGURABLE_SUSPEND_SIGNAL)
 	PPG_introspect_threadSuspendSignal = SIGRTMIN;

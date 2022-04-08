@@ -55,8 +55,6 @@ typedef struct PlatformWalkData {
 	sigset_t oldMask;
 	/* Records whether we need to clean up in resume */
 	BOOLEAN cleanupRequired;
-	/* Backpointer to encapsulating state */
-	J9ThreadWalkState *state;
 } PlatformWalkData;
 
 /* unable to pass data into signal handler so use global ptr */
@@ -242,7 +240,7 @@ freeThread(J9ThreadWalkState *state, J9PlatformThread *thread)
 static int32_t
 setupNativeThread(J9ThreadWalkState *state, thread_context *sigContext)
 {
-	PlatformWalkData *data = (PlatformWalkData *)state->platform_data;
+	PlatformWalkData *data = state->platform_data;
 	int32_t rc = 0;
 
 	/* Allocate the thread container. */
@@ -441,7 +439,6 @@ omrintrospect_threads_startDo_with_signal(struct OMRPortLibrary *portLibrary, J9
 	}
 
 	memset(data, 0, sizeof(PlatformWalkData));
-	data->state = state;
 	data->filterThread = mach_thread_self();
 
 	/* Create a pipe to allow the resumed thread to report it has completed

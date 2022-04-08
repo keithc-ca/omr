@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,7 +29,6 @@
 #include "omrport.h"
 #include "omrintrospect_common.h"
 
-
 J9PlatformThread *
 omrintrospect_threads_startDo_with_signal(struct OMRPortLibrary *portLibrary, J9Heap *heap, J9ThreadWalkState *state, void *signal_info)
 {
@@ -42,7 +41,6 @@ omrintrospect_threads_startDo(struct OMRPortLibrary *portLibrary, J9Heap *heap, 
 {
 	return omrintrospect_threads_startDo_with_signal(portLibrary, heap, state, NULL);
 }
-
 
 J9PlatformThread *
 omrintrospect_threads_nextDo(J9ThreadWalkState *state)

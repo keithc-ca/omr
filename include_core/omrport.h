@@ -1270,13 +1270,16 @@ typedef struct J9PlatformThread {
 	void *caa;
 } J9PlatformThread;
 
+/* forward declaration of opaque platform-specific data */
+struct PlatformWalkData;
+
 typedef struct J9ThreadWalkState {
 	struct OMRPortLibrary *portLibrary;
 	struct J9PlatformThread *current_thread;
 	int64_t deadline1;
 	int64_t deadline2;
 	struct J9Heap *heap;
-	void *platform_data;
+	struct PlatformWalkData *platform_data;
 	intptr_t error;
 	uintptr_t error_detail;
 	const char *error_string;
@@ -1324,8 +1327,8 @@ typedef enum OMRProcessorArchitecture {
 	OMR_PROCESSOR_S390_FIRST,
 	OMR_PROCESSOR_S390_UNKNOWN = OMR_PROCESSOR_S390_FIRST,
 	OMR_PROCESSOR_S390_Z900,
- 	OMR_PROCESSOR_S390_Z990,
- 	OMR_PROCESSOR_S390_Z9,
+	OMR_PROCESSOR_S390_Z990,
+	OMR_PROCESSOR_S390_Z9,
 	OMR_PROCESSOR_S390_Z10,
 	OMR_PROCESSOR_S390_Z196,
 	OMR_PROCESSOR_S390_ZEC12,
@@ -1569,7 +1572,7 @@ typedef struct OMRProcessorDesc {
 
 /* z15 facilities */
 
-/* STFLE bit 61 - Miscellaneous-instruction-extensions facility 3 */ 
+/* STFLE bit 61 - Miscellaneous-instruction-extensions facility 3 */
 #define OMR_FEATURE_S390_MISCELLANEOUS_INSTRUCTION_EXTENSION_3 61
 
 /* STFLE bit 148 - Vector enhancements facility 2 */

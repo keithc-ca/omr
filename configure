@@ -660,6 +660,8 @@ CCLINK
 OMR_CROSS_COMPILE
 OMR_VALGRIND_MEMCHECK
 OMR_GC_IDLE_HEAP_MANAGER
+HAVE_LIBDWARF_LIBDWARF_H
+HAVE_LIBDWARF_DWARF_H
 VS_CL_PATH
 OMR_DIASDK_HOME
 OMRTHREAD_LIB_UNIX
@@ -702,8 +704,8 @@ OMR_GC_OBJECT_ALLOCATION_NOTIFY
 OMR_GC_LEAF_BITS
 OMR_GC_CONCURRENT_SWEEP
 OMR_GC_CONCURRENT_SCAVENGER
-OMR_GC_DOUBLE_MAP_ARRAYLETS
 OMR_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION
+OMR_GC_DOUBLE_MAP_ARRAYLETS
 OMR_GC_MODRON_SCAVENGER
 OMR_GC_MODRON_CONCURRENT_MARK
 OMR_GC_MODRON_COMPACTION
@@ -6929,11 +6931,20 @@ esac
 fi
 
 if test "$enable_DDR" = "yes" && test "$OMR_HOST_OS" = "linux" && test "$OMR_CROSS_CONFIGURE" = "yes"; then :
-	# Can't run AC_CHECK_HEADERS when cross-configuring.
-	# If DDR is enabled set these flags and hope for the best,
-	# otherwise the build will fail even if the headers are available.
-	$as_echo "#define HAVE_LIBDWARF_DWARF_H 1" >>confdefs.h
-	$as_echo "#define HAVE_LIBDWARF_LIBDWARF_H 1" >>confdefs.h
+
+		# Can't run AC_CHECK_HEADERS when cross-configuring.
+		# If DDR is enabled set these flags and hope for the best,
+		# otherwise the build will fail even if the headers are available.
+		HAVE_LIBDWARF_DWARF_H=1
+
+   $as_echo "#define HAVE_LIBDWARF_DWARF_H 1" >>confdefs.h
+
+		HAVE_LIBDWARF_LIBDWARF_H=1
+
+   $as_echo "#define HAVE_LIBDWARF_LIBDWARF_H 1" >>confdefs.h
+
+
+
 fi
 
 # Check whether --enable-OMR_GC_IDLE_HEAP_MANAGER was given.

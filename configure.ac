@@ -603,21 +603,22 @@ AS_IF([test "$enable_DDR" = yes -a "$cross_compiling" != "yes"],
 		],
 		[
 			# other host types: look for DWARF support
-			if test "x$OMR_CROSS_CONFIGURE" != "xyes"
-			then
-				AC_CHECK_HEADERS([dwarf.h libdwarf/dwarf.h libdwarf.h libdwarf/libdwarf.h])
-				AC_SEARCH_LIBS([dwarf_init], [dwarf], [], [], [])
-				AC_SEARCH_LIBS([dwarf_init], [dwarf], [], [], [-lelf])
-				AC_SEARCH_LIBS([elf_begin], [elf], [], [], [])
-			else
-				# Can't run AC_CHECK_HEADERS when cross-configuring.
-				# If DDR is enabled set these flags and hope for the best,
-				# otherwise the build will fail even if the headers are available.
-				AC_DEFINE([HAVE_DWARF_H])
-				AC_DEFINE([HAVE_LIBDWARF_H])
-			fi
+			AC_CHECK_HEADERS([dwarf.h libdwarf/dwarf.h libdwarf.h libdwarf/libdwarf.h])
+			AC_SEARCH_LIBS([dwarf_init], [dwarf], [], [], [])
+			AC_SEARCH_LIBS([dwarf_init], [dwarf], [], [], [-lelf])
+			AC_SEARCH_LIBS([elf_begin], [elf], [], [], [])
 		]
 	)]
+)
+
+AS_IF([test "$enable_DDR" = "yes" && test "$OMR_HOST_OS" = "linux" && test "$OMR_CROSS_CONFIGURE" = "yes"],
+	[
+		# Can't run AC_CHECK_HEADERS when cross-configuring.
+		# If DDR is enabled set these flags and hope for the best,
+		# otherwise the build will fail even if the headers are available.
+		OMRCFG_ENABLE_FLAG([HAVE_LIBDWARF_DWARF_H])
+		OMRCFG_ENABLE_FLAG([HAVE_LIBDWARF_LIBDWARF_H])
+	]
 )
 
 OMRCFG_DEFINE_FLAG_OFF([OMR_GC_IDLE_HEAP_MANAGER])

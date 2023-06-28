@@ -149,7 +149,7 @@ omrthread_t global_lock_owner = UNOWNED;
 /* See CMVC 87602 - Problems on AIX 5.2 with very long wait times */
 #define BOUNDED_I64_TO_IDATA(longValue) ((longValue) > 0x7FFFFFFFLL ? (intptr_t)0x7FFFFFFF : (intptr_t)(longValue))
 #else /* AIXPPC */
-#define BOUNDED_I64_TO_IDATA(longValue) ((intptr_t)longValue)
+#define BOUNDED_I64_TO_IDATA(longValue) ((intptr_t)(longValue))
 #endif /* AIXPPC */
 #else /* OMR_ENV_DATA64 */
 #define BOUNDED_I64_TO_IDATA(longValue) ((longValue) > 0x7FFFFFFF ? 0x7FFFFFFF : (intptr_t)(longValue))
@@ -157,11 +157,12 @@ omrthread_t global_lock_owner = UNOWNED;
 
 #define USE_CLOCK_NANOSLEEP 0
 
-#ifndef ADJUST_TIMEOUT
-#define ADJUST_TIMEOUT(millis, nanos) \
-	  (((nanos) && ((millis) != ((intptr_t) (((uintptr_t)-1) >> 1)))) ? \
-		 ((millis) + 1) : (millis))
-#endif
+#if !defined(ADJUST_TIMEOUT)
+#define ADJUST_TIMEOUT(millis, nanos)                                       \
+		(((0 != (nanos)) && ((uintptr_t)(millis) < ((~(uintptr_t)0) >> 1))) \
+			? ((millis) + 1)                                                \
+			: (millis))
+#endif /* !defined(ADJUST_TIMEOUT) */
 
 #define MONITOR_WAIT_CONDITION(thread, monitor)  (thread)->condition
 

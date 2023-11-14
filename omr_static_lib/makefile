@@ -76,4 +76,7 @@ $(foreach lib,$(OMRLIBS), \
     $(shell MAKEFLAGS= $(MAKE) -s --no-print-directory -C $(lib) show-objects), \
     $(if $(filter /%,$(object)),$(object),$(lib)/$(object))))
 
+$(OBJECTS) :
+	@echo $@
+
 include $(top_srcdir)/omrmakefiles/rules.mk

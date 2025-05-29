@@ -39,8 +39,7 @@ typedef void (*sighandler_t)(int sig);
 #elif defined(J9ZOS390) || defined(AIXPPC)
 typedef void (*sighandler_t)(int sig);
 #elif defined(OMR_OS_WINDOWS)
-typedef void (__cdecl *sighandler_t)(int sig);
-#define __THROW
+typedef int (__cdecl *sighandler_t)(int sig, int subcode);
 #endif /* defined(OMR_OS_WINDOWS) */
 
 #define OMRSIG_RC_ERROR -1
@@ -66,7 +65,7 @@ int omrsig_handler(int sig, void *siginfo, void *uc);
  * Register a primary signal handler function, emulating the behavior, parameters, and return of signal().
  *
  * @param[in] signum Signal number
- * @param[in] handler Signal hanlder function to register
+ * @param[in] handler Signal handler function to register
  * @return
  *		Previous value of the signal handler if successful
  *		SIG_ERR with errno set to EINVAL if signum is invalid.
@@ -75,7 +74,7 @@ sighandler_t omrsig_primary_signal(int signum, sighandler_t handler);
 
 #if defined(OMR_OS_WINDOWS)
 
-_CRTIMP void (__cdecl * __cdecl signal(_In_ int _SigNum, _In_opt_ void (__cdecl * _Func)(int)))(int);
+_CRTIMP void * __cdecl signal(int _SigNum, sighandler_t handler);
 
 #else /* defined(OMR_OS_WINDOWS) */
 

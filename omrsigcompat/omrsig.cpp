@@ -29,7 +29,7 @@
 /* windows.h defined UDATA.  Ignore its definition */
 #define UDATA UDATA_win32_
 #include <windows.h>
-#undef UDATA	/* this is safe because our UDATA is a typedef, not a macro */
+#undef UDATA /* this is safe because our UDATA is a typedef, not a macro */
 #else /* defined(OMR_OS_WINDOWS) */
 #include <dlfcn.h>
 #endif /* defined(OMR_OS_WINDOWS) */
@@ -54,7 +54,7 @@ static bool handlerIsFunction(const struct sigaction *act);
 
 #if defined(OMR_OS_WINDOWS)
 
-typedef void (__cdecl * (__cdecl *SIGNAL)(_In_ int _SigNum, _In_opt_ void (__cdecl * _Func)(int)))(int);
+typedef void * (__cdecl *SIGNAL)(int _SigNum, sighandler_t _Func);
 static SIGNAL signalOS = NULL;
 
 #elif defined(J9ZOS390)
@@ -87,7 +87,6 @@ handlerIsFunction(const struct sigaction *act)
 #else /* defined(POSIX_SIGNAL) */
 	return functionHandler;
 #endif /* defined(POSIX_SIGNAL) */
-
 }
 
 static bool
@@ -135,7 +134,7 @@ omrsig_handler(int sig, void *siginfo, void *uc)
 			 */
 			if ((0 == ec) && ((handlerSlot.secondaryAction.sa_flags & SA_NODEFER)
 #if (defined(AIXPPC) || defined(J9ZOS390))
-				/* Only AIX and zos respects that SA_RESETHAND behaves like SA_NODEFER by POSIX spec. */
+				/* Only AIX and z/OS respects that SA_RESETHAND behaves like SA_NODEFER by POSIX spec. */
 				|| (handlerSlot.secondaryAction.sa_flags & SA_RESETHAND)
 #endif /* (defined(AIXPPC) || defined(J9ZOS390)) */
 				)) {
@@ -149,7 +148,6 @@ omrsig_handler(int sig, void *siginfo, void *uc)
 				ec = pthread_sigmask(SIG_UNBLOCK, &mask, NULL);
 			}
 
-
 			/* SA_RESETHAND - If set, the disposition of the signal will be reset to SIG_DFL and the SA_SIGINFO flag
 			 * will be cleared on entry to the signal handler. Does not work for SIGILL or SIGTRAP, silently. Also
 			 * behaves like SA_NODEFER according to POSIX standard, but AIX is the supported OS found to do this.
@@ -158,7 +156,7 @@ omrsig_handler(int sig, void *siginfo, void *uc)
 				sighandler_t handler = SIG_DFL;
 				sigaction_t action = (sigaction_t)SIG_DFL;
 				int flags = handlerSlot.secondaryAction.sa_flags;
-				if (flags & SA_SIGINFO) {
+				if (OMR_ARE_ANY_BITS_SET(flags, SA_SIGINFO)) {
 					action = handlerSlot.secondaryAction.sa_sigaction;
 				} else {
 					handler = handlerSlot.secondaryAction.sa_handler;
@@ -173,7 +171,7 @@ omrsig_handler(int sig, void *siginfo, void *uc)
 				 * used instead of sa_handler.
 				 * NOTE FOR NOW: null, DFL, and IGN check the sa_handler when registering it, not here
 				 */
-				if (flags & SA_SIGINFO) {
+				if (OMR_ARE_ANY_BITS_SET(flags, SA_SIGINFO)) {
 					action(sig, (siginfo_t *)siginfo, uc);
 				} else {
 					handler(sig);
@@ -187,7 +185,7 @@ omrsig_handler(int sig, void *siginfo, void *uc)
 			handlerSlot.secondaryAction.sa_handler(sig);
 			rc = OMRSIG_RC_SIGNAL_HANDLED;
 #endif /* defined(POSIX_SIGNAL) */
-		} else if (SIG_DFL == handlerSlot.secondaryAction.sa_handler){
+		} else if (SIG_DFL == handlerSlot.secondaryAction.sa_handler) {
 			rc = OMRSIG_RC_DEFAULT_ACTION_REQUIRED;
 		}
 	}
@@ -200,8 +198,8 @@ omrsig_primary_signal(int signum, sighandler_t handler)
 	struct sigaction act;
 	struct sigaction oldact;
 
-	memset(&act, 0, sizeof(struct sigaction));
-	memset(&oldact, 0, sizeof(struct sigaction));
+	memset(&act, 0, sizeof(act));
+	memset(&oldact, 0, sizeof(oldact));
 
 	act.sa_handler = handler;
 #if defined(POSIX_SIGNAL)
@@ -228,11 +226,10 @@ omrsig_primary_sigaction(int signum, const struct sigaction *act, struct sigacti
 
 #if defined(OMR_OS_WINDOWS)
 void * __cdecl
-signal(_In_ int signum, _In_opt_ int (* handler)(int, int))
 #else /* defined(OMR_OS_WINDOWS) */
 sighandler_t
-signal(int signum, sighandler_t handler)
 #endif /* defined(OMR_OS_WINDOWS) */
+signal(int signum, sighandler_t handler)
 {
 	return omrsig_signal_internal(signum, handler);
 }
@@ -243,8 +240,8 @@ omrsig_signal_internal(int signum, sighandler_t handler)
 	struct sigaction act;
 	struct sigaction oldact;
 
-	memset(&act, 0, sizeof(struct sigaction));
-	memset(&oldact, 0, sizeof(struct sigaction));
+	memset(&act, 0, sizeof(act));
+	memset(&oldact, 0, sizeof(oldact));
 
 	oldact.sa_handler = SIG_DFL;
 	act.sa_handler = handler;
@@ -261,16 +258,14 @@ omrsig_signal_internal(int signum, sighandler_t handler)
 		} else {
 			ret = SIG_ERR;
 		}
+	} else
+#endif /* defined(OMR_OS_WINDOWS) */
+	if (0 == omrsig_sigaction_internal(signum, &act, &oldact, false)) {
+		ret = oldact.sa_handler;
 	} else {
-#endif /* defined(OMR_OS_WINDOWS) */
-		if (0 == omrsig_sigaction_internal(signum, &act, &oldact, false)) {
-			ret = oldact.sa_handler;
-		} else {
-			ret = SIG_ERR;
-		}
-#if defined(OMR_OS_WINDOWS)
+		ret = SIG_ERR;
 	}
-#endif /* defined(OMR_OS_WINDOWS) */
+
 	return ret;
 }
 
@@ -287,16 +282,16 @@ omrsig_signalOS_internal(int signum, const struct sigaction *act, struct sigacti
 {
 	int rc = 0;
 #if defined(J9ZOS390)
-	/* zos does not seem to allow dlopen with NULL and no dll name. Use pragma map to SIGACT instead.*/
+	/* z/OS does not seem to allow dlopen with NULL and no dll name. Use pragma map to SIGACT instead. */
 	rc = sigactionOS(signum, act, oldact);
 #elif defined(OMRZTPF)
 	if (sigactionOS == NULL) {
 		void *handle = (char *)dlopen("CTIS", RTLD_LOCAL);
-		if (handle == NULL)  {
+		if (NULL == handle) {
 			rc = -1;
 		}  else  {
 			sigactionOS = (SIGACTION)dlsym(handle, "sigaction");
-			if (sigactionOS == NULL) {
+			if (NULL == sigactionOS) {
 				rc = -1;
 			} else {
 				rc = sigactionOS(signum, act, oldact);
@@ -310,12 +305,11 @@ omrsig_signalOS_internal(int signum, const struct sigaction *act, struct sigacti
 	if (NULL == sigactionOS) {
 		sigactionOS = (SIGACTION)dlsym(RTLD_NEXT, "sigaction");
 		if (NULL == sigactionOS) {
-			const char *lib = NULL;
 #if defined(AIXPPC)
 #if defined(OMR_ENV_DATA64)
-			lib = "/usr/lib/libc.a(shr_64.o)";
+			const char *lib = "/usr/lib/libc.a(shr_64.o)";
 #else /* defined(OMR_ENV_DATA64) */
-			lib = "/usr/lib/libc.a(shr.o)";
+			const char *lib = "/usr/lib/libc.a(shr.o)";
 #endif /* defined(OMR_ENV_DATA64) */
 			void *handle = dlopen(lib, RTLD_LAZY | RTLD_MEMBER);
 #else /* defined(AIXPPC) */
@@ -369,7 +363,7 @@ omrsig_sigaction_internal(int signum, const struct sigaction *act, struct sigact
 {
 	int rc = 0;
 	/* Check for valid signum. */
-	if (!validSignalNum(signum, (NULL == act) || (!handlerIsFunction(act)))) {
+	if (!validSignalNum(signum, (NULL == act) || !handlerIsFunction(act))) {
 		rc = -1;
 		errno = EINVAL;
 	} else {
@@ -385,20 +379,19 @@ omrsig_sigaction_internal(int signum, const struct sigaction *act, struct sigact
 		if (NULL != oldact) {
 			struct sigaction oact;
 			bool returnOldAction = false;
-			memset(&oact, 0, sizeof(struct sigaction));
+			memset(&oact, 0, sizeof(oact));
 			rc = omrsig_signalOS_internal(signum, NULL, &oact);
 			if (-1 != rc) {
 #if defined(POSIX_SIGNAL)
-				if (OMR_ARE_NO_BITS_SET(oact.sa_flags, SA_SIGINFO)) {
+				if (OMR_ARE_NO_BITS_SET(oact.sa_flags, SA_SIGINFO))
 #endif /* defined(POSIX_SIGNAL) */
+				{
 					if (((sighandler_t)SIG_DFL == oact.sa_handler)
-						|| ((sighandler_t)SIG_IGN == oact.sa_handler)
+					||  ((sighandler_t)SIG_IGN == oact.sa_handler)
 					) {
 						returnOldAction = true;
 					}
-#if defined(POSIX_SIGNAL)
 				}
-#endif /* defined(POSIX_SIGNAL) */
 			}
 			if (returnOldAction) {
 				*oldact = oact;
@@ -433,7 +426,7 @@ omrsig_sigaction_internal(int signum, const struct sigaction *act, struct sigact
 				newRegisteringHandler = sigData[signum].secondaryAction;
 			}
 #if defined(J9ZOS390)
-			/* On zos, when an alt signal stack is set, the second call to pthread_sigmask() or
+			/* On z/OS, when an alt signal stack is set, the second call to pthread_sigmask() or
 			 * sigprocmask() within a signal handler will cause the program to sig kill itself.
 			 */
 			newRegisteringHandler.sa_flags &= ~SA_ONSTACK;
@@ -474,7 +467,8 @@ checkMaskEquality(int signum, const sigset_t *mask, const sigset_t *otherMask)
 	return true;
 }
 
-int __sigactionset(size_t newct, const __sigactionset_t newsets[], size_t *oldct, __sigactionset_t oldsets[], int options)
+int
+__sigactionset(size_t newct, const __sigactionset_t newsets[], size_t *oldct, __sigactionset_t oldsets[], int options)
 {
 	if ((newct > 64) && (NULL != newsets)) {
 		errno = EINVAL;
@@ -489,7 +483,8 @@ int __sigactionset(size_t newct, const __sigactionset_t newsets[], size_t *oldct
 					act.sa_sigaction = newsets[i].__sa_sigaction;
 					act.sa_flags = newsets[i].__sa_flags;
 					if (1 == sigismember(&newsets[i].__sa_signals, j)
-						&& !validSignalNum(j, !handlerIsFunction(&act))) {
+						&& !validSignalNum(j, !handlerIsFunction(&act))
+					) {
 						errno = EINVAL;
 						goto failed;
 					}

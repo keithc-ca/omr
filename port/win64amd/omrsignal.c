@@ -101,13 +101,11 @@ static struct {
 
 #define ARRAY_SIZE_SIGNALS (NSIG + 1)
 
-typedef sighandler_t win_signal;
-
 /* Store the original signal handler. During shutdown, we need to restore
  * the signal handler to the original OS handler.
  */
 static struct {
-	win_signal originalHandler;
+	sighandler_t originalHandler;
 	uint32_t restore;
 } handlerInfo[ARRAY_SIZE_SIGNALS];
 
@@ -167,7 +165,7 @@ static int32_t runInTryExcept(struct OMRPortLibrary *portLibrary, omrsig_protect
 static uint32_t mapOSSignalToPortLib(uint32_t signalNo);
 static int mapPortLibSignalToOSSignal(uint32_t portLibSignal);
 
-static int32_t registerSignalHandlerWithOS(OMRPortLibrary *portLibrary, uint32_t portLibrarySignalNo, win_signal handler, void **oldOSHandler);
+static int32_t registerSignalHandlerWithOS(OMRPortLibrary *portLibrary, uint32_t portLibrarySignalNo, sighandler_t handler, void **oldOSHandler);
 static void updateSignalCount(int osSignalNo);
 static void mainASynchSignalHandler(int osSignalNo);
 static void removeAsyncHandlers(OMRPortLibrary *portLibrary);
@@ -475,7 +473,7 @@ omrsig_register_os_handler(struct OMRPortLibrary *portLibrary, uint32_t portlibS
 		rc = OMRPORT_SIG_ERROR;
 	} else {
 		omrthread_monitor_enter(registerHandlerMonitor);
-		rc = registerSignalHandlerWithOS(portLibrary, portlibSignalFlag, (win_signal)newOSHandler, oldOSHandler);
+		rc = registerSignalHandlerWithOS(portLibrary, portlibSignalFlag, (sighandler_t)newOSHandler, oldOSHandler);
 		omrthread_monitor_exit(registerHandlerMonitor);
 	}
 
@@ -1593,10 +1591,10 @@ mapPortLibSignalToOSSignal(uint32_t portLibSignal)
  * @return 0 upon success, non-zero otherwise.
  */
 static int32_t
-registerSignalHandlerWithOS(OMRPortLibrary *portLibrary, uint32_t portLibrarySignalNo, win_signal handler, void **oldOSHandler)
+registerSignalHandlerWithOS(OMRPortLibrary *portLibrary, uint32_t portLibrarySignalNo, sighandler_t handler, void **oldOSHandler)
 {
     int osSignalNo = mapPortLibSignalToOSSignal(portLibrarySignalNo);
-    win_signal localOldOSHandler = NULL;
+    sighandler_t localOldOSHandler = NULL;
 
     /* Don't register a handler for unrecognized OS signals.
      * Unrecognized OS signals are the ones which aren't included in signalMap.
@@ -1817,7 +1815,7 @@ registerMainHandlers(OMRPortLibrary *portLibrary, uint32_t flags, uint32_t allow
 {
 	int32_t rc = 0;
 	uint32_t flagsSignalsOnly = (flags & allowedSubsetOfFlags);
-	win_signal handler = NULL;
+	sighandler_t handler = NULL;
 
 	if (OMR_ARE_ALL_BITS_SET(signalOptions, OMRPORT_SIG_OPTIONS_REDUCED_SIGNALS_ASYNCHRONOUS)) {
 		/* Do not install any handlers if -Xrs is set. */

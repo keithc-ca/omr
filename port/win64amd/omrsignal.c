@@ -101,7 +101,7 @@ static struct {
 
 #define ARRAY_SIZE_SIGNALS (NSIG + 1)
 
-typedef void (*win_signal)(int);
+typedef void * (*win_signal)(int, int);
 
 /* Store the original signal handler. During shutdown, we need to restore
  * the signal handler to the original OS handler.

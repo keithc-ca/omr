@@ -25,7 +25,7 @@
 /* windows.h defined UDATA.  Ignore its definition */
 #define UDATA UDATA_win32_
 #include <windows.h>
-#undef UDATA	/* this is safe because our UDATA is a typedef, not a macro */
+#undef UDATA /* this is safe because our UDATA is a typedef, not a macro */
 #endif /* defined(OMR_OS_WINDOWS) */
 
 #ifdef __cplusplus
@@ -39,7 +39,7 @@ typedef void (*sighandler_t)(int sig);
 #elif defined(J9ZOS390) || defined(AIXPPC)
 typedef void (*sighandler_t)(int sig);
 #elif defined(OMR_OS_WINDOWS)
-typedef int (__cdecl *sighandler_t)(int sig, int subcode);
+typedef void (__cdecl *sighandler_t)(int sig);
 #endif /* defined(OMR_OS_WINDOWS) */
 
 #define OMRSIG_RC_ERROR -1
@@ -74,7 +74,7 @@ sighandler_t omrsig_primary_signal(int signum, sighandler_t handler);
 
 #if defined(OMR_OS_WINDOWS)
 
-_CRTIMP void * __cdecl signal(int _SigNum, sighandler_t handler);
+_CRTIMP sighandler_t __cdecl signal(int _SigNum, sighandler_t handler);
 
 #else /* defined(OMR_OS_WINDOWS) */
 
@@ -104,7 +104,6 @@ sighandler_t sysv_signal(int signum, sighandler_t handler);
 __sighandler_t __sysv_signal(int sig, __sighandler_t handler);
 sighandler_t ssignal(int sig, sighandler_t handler);
 #endif /* defined(LINUX) */
-
 
 #endif /* !defined(OMR_OS_WINDOWS) */
 

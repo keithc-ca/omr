@@ -54,7 +54,7 @@ static bool handlerIsFunction(const struct sigaction *act);
 
 #if defined(OMR_OS_WINDOWS)
 
-typedef void * (__cdecl *SIGNAL)(int _SigNum, sighandler_t _Func);
+typedef sighandler_t (__cdecl *SIGNAL)(int _SigNum, sighandler_t _Func);
 static SIGNAL signalOS = NULL;
 
 #elif defined(J9ZOS390)
@@ -224,11 +224,7 @@ omrsig_primary_sigaction(int signum, const struct sigaction *act, struct sigacti
 }
 #endif /* defined(POSIX_SIGNAL) */
 
-#if defined(OMR_OS_WINDOWS)
-void * __cdecl
-#else /* defined(OMR_OS_WINDOWS) */
 sighandler_t
-#endif /* defined(OMR_OS_WINDOWS) */
 signal(int signum, sighandler_t handler)
 {
 	return omrsig_signal_internal(signum, handler);

@@ -224,11 +224,29 @@ omrsig_primary_sigaction(int signum, const struct sigaction *act, struct sigacti
 }
 #endif /* defined(POSIX_SIGNAL) */
 
+#if defined(OMR_OS_WINDOWS)
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Winconsistent-dllimport"
+#else /* defined(__clang__) */
+#pragma warning(push)
+#pragma warning(disable : 4273)
+#endif /* defined (__clang__) */
+#endif /* defined(OMR_OS_WINDOWS) */
+
 sighandler_t
 signal(int signum, sighandler_t handler)
 {
 	return omrsig_signal_internal(signum, handler);
 }
+
+#if defined(OMR_OS_WINDOWS)
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#else /* defined(__clang__) */
+#pragma warning(pop)
+#endif /* defined (__clang__) */
+#endif /* defined(OMR_OS_WINDOWS) */
 
 static sighandler_t
 omrsig_signal_internal(int signum, sighandler_t handler)

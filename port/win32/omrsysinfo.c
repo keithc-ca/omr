@@ -2080,116 +2080,124 @@ omrsysinfo_get_number_context_switches(struct OMRPortLibrary *portLibrary, uint6
 uintptr_t
 omrsysinfo_get_processes(struct OMRPortLibrary *portLibrary, OMRProcessInfoCallback callback, void *userData)
 {
-	HRESULT hres;
-    IWbemLocator *pLoc = NULL;
-    IWbemServices *pSvc = NULL;
-    IEnumWbemClassObject *pEnumerator = NULL;
-    uintptr_t callback_result = 0;
+	HRESULT hres = 0;
+	IWbemLocator *pLoc = NULL;
+	IWbemServices *pSvc = NULL;
+	IEnumWbemClassObject *pEnumerator = NULL;
+	uintptr_t callback_result = 0;
+	IWbemClassObject *pclsObj = NULL;
+	ULONG uReturn = 0;
 
-    hres = CoInitializeEx(0, COINIT_MULTITHREADED);
-    if (FAILED(hres)) {
-        return 1;
-    }
+	hres = CoInitializeEx(0, COINIT_MULTITHREADED);
+	if (FAILED(hres)) {
+		return 1;
+	}
 
-    hres = CoInitializeSecurity(NULL, -1, NULL, NULL,
-                                RPC_C_AUTHN_LEVEL_DEFAULT, RPC_C_IMP_LEVEL_IMPERSONATE,
-                                NULL, EOAC_NONE, NULL);
-    if (FAILED(hres)) {
-        CoUninitialize();
-        return 1;
-    }
+	hres = CoInitializeSecurity(NULL, -1, NULL, NULL,
+			RPC_C_AUTHN_LEVEL_DEFAULT, RPC_C_IMP_LEVEL_IMPERSONATE,
+			NULL, EOAC_NONE, NULL);
+	if (FAILED(hres)) {
+		CoUninitialize();
+		return 1;
+	}
 
-    hres = CoCreateInstance(&CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER,
-                            &IID_IWbemLocator, (LPVOID *)&pLoc);
-    if (FAILED(hres)) {
-        CoUninitialize();
-        return 1;
-    }
+	hres = CoCreateInstance(&CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER,
+			&IID_IWbemLocator, (LPVOID *)&pLoc);
+	if (FAILED(hres)) {
+		CoUninitialize();
+		return 1;
+	}
 
-    BSTR ns = SysAllocString(L"ROOT\\CIMV2");
-    hres = pLoc->lpVtbl->ConnectServer(pLoc, ns, NULL, NULL, NULL, 0, NULL, NULL, &pSvc);
-    SysFreeString(ns);
-    if (FAILED(hres)) {
-        pLoc->lpVtbl->Release(pLoc);
-        CoUninitialize();
-        return 1;
-    }
+	BSTR ns = SysAllocString(L"ROOT\\CIMV2");
+	hres = pLoc->lpVtbl->ConnectServer(pLoc, ns, NULL, NULL, NULL, 0, NULL, NULL, &pSvc);
+	SysFreeString(ns);
+	if (FAILED(hres)) {
+		pLoc->lpVtbl->Release(pLoc);
+		CoUninitialize();
+		return 1;
+	}
 
-    hres = CoSetProxyBlanket((IUnknown *)pSvc,
-                             RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL,
-                             RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE,
-                             NULL, EOAC_NONE);
-    if (FAILED(hres)) {
-        pSvc->lpVtbl->Release(pSvc);
-        pLoc->lpVtbl->Release(pLoc);
-        CoUninitialize();
-        return 1;
-    }
+	hres = CoSetProxyBlanket((IUnknown *)pSvc,
+			RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL,
+			RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE,
+			NULL, EOAC_NONE);
+	if (FAILED(hres)) {
+		pSvc->lpVtbl->Release(pSvc);
+		pLoc->lpVtbl->Release(pLoc);
+		CoUninitialize();
+		return 1;
+	}
 
-    BSTR queryLang = SysAllocString(L"WQL");
-    BSTR queryStr = SysAllocString(L"SELECT ProcessId, CommandLine, Name FROM Win32_Process");
-    hres = pSvc->lpVtbl->ExecQuery(pSvc, queryLang, queryStr,
-                                   WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
-                                   NULL, &pEnumerator);
-    SysFreeString(queryLang);
-    SysFreeString(queryStr);
-    if (FAILED(hres)) {
-        pSvc->lpVtbl->Release(pSvc);
-        pLoc->lpVtbl->Release(pLoc);
-        CoUninitialize();
-        return 1;
-    }
+	BSTR queryLang = SysAllocString(L"WQL");
+	BSTR queryStr = SysAllocString(L"SELECT ProcessId, CommandLine, Name FROM Win32_Process");
+	// FIXME missing checks that queryLang and queryStr are valid
+	hres = pSvc->lpVtbl->ExecQuery(pSvc, queryLang, queryStr,
+			WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
+			NULL, &pEnumerator);
+	SysFreeString(queryLang);
+	SysFreeString(queryStr);
+	if (FAILED(hres)) {
+		pSvc->lpVtbl->Release(pSvc);
+		pLoc->lpVtbl->Release(pLoc);
+		CoUninitialize();
+		return 1;
+	}
 
-    IWbemClassObject *pclsObj = NULL;
-    ULONG uReturn = 0;
+	while ((NULL != pEnumerator)
+			&& SUCCEEDED(pEnumerator->lpVtbl->Next(pEnumerator, WBEM_INFINITE, 1, &pclsObj, &uReturn))
+			&& uReturn
+	) {
+		VARIANT vtPid;
+		VARIANT vtCmd;
+		VARIANT vtName;
+		VariantInit(&vtPid);
+		VariantInit(&vtCmd);
+		VariantInit(&vtName);
 
-    while (pEnumerator && SUCCEEDED(pEnumerator->lpVtbl->Next(pEnumerator, WBEM_INFINITE, 1, &pclsObj, &uReturn)) && uReturn) {
-        VARIANT vtPid, vtCmd, vtName;
-        VariantInit(&vtPid);
-        VariantInit(&vtCmd);
-        VariantInit(&vtName);
+		pclsObj->lpVtbl->Get(pclsObj, L"ProcessId", 0, &vtPid, 0, 0);
+		pclsObj->lpVtbl->Get(pclsObj, L"CommandLine", 0, &vtCmd, 0, 0);
+		pclsObj->lpVtbl->Get(pclsObj, L"Name", 0, &vtName, 0, 0);
 
-        pclsObj->lpVtbl->Get(pclsObj, L"ProcessId", 0, &vtPid, 0, 0);
-        pclsObj->lpVtbl->Get(pclsObj, L"CommandLine", 0, &vtCmd, 0, 0);
-        pclsObj->lpVtbl->Get(pclsObj, L"Name", 0, &vtName, 0, 0);
+		if (VT_I4 == vtPid.vt) {
+			const wchar_t *src = NULL;
+			if ((VT_BSTR == vtCmd.vt) && (NULL != vtCmd.bstrVal)) {
+				src = vtCmd.bstrVal;
+			} else if (vtName.vt == VT_BSTR && vtName.bstrVal != NULL) {
+				src = vtName.bstrVal;
+			}
 
-        if (vtPid.vt == VT_I4) {
-            const wchar_t *src = NULL;
-            if (vtCmd.vt == VT_BSTR && vtCmd.bstrVal != NULL) {
-                src = vtCmd.bstrVal;
-            } else if (vtName.vt == VT_BSTR && vtName.bstrVal != NULL) {
-                src = vtName.bstrVal;
-            }
+			if (NULL != src) {
+				int len = WideCharToMultiByte(CP_UTF8, 0, src, -1, NULL, 0, NULL, NULL);
+				char *cmdStr = (char *)portLibrary->mem_allocate_memory(
+						portLibrary, len, OMR_GET_CALLSITE(), OMRMEM_CATEGORY_PORT_LIBRARY);
+				if (NULL != cmdStr) {
+					WideCharToMultiByte(CP_UTF8, 0, src, -1, cmdStr, len, NULL, NULL);
+					callback_result = callback((uintptr_t)vtPid.intVal, cmdStr, userData);
+					portLibrary->mem_free_memory(portLibrary, cmdStr);
+				}
+			}
+		}
 
-            if (src != NULL) {
-                int len = WideCharToMultiByte(CP_UTF8, 0, src, -1, NULL, 0, NULL, NULL);
-                char *cmdStr = (char *)portLibrary->mem_allocate_memory(
-                    portLibrary, len, OMR_GET_CALLSITE(), OMRMEM_CATEGORY_PORT_LIBRARY);
-                if (cmdStr != NULL) {
-                    WideCharToMultiByte(CP_UTF8, 0, src, -1, cmdStr, len, NULL, NULL);
-                    callback_result = callback((uintptr_t)vtPid.intVal, cmdStr, userData);
-                    portLibrary->mem_free_memory(portLibrary, cmdStr);
-                    if (callback_result != 0) {
-                        VariantClear(&vtPid);
-                        VariantClear(&vtCmd);
-                        VariantClear(&vtName);
-                        pclsObj->lpVtbl->Release(pclsObj);
-                        break;
-                    }
-                }
-            }
-        }
+		VariantClear(&vtPid);
+		VariantClear(&vtCmd);
+		VariantClear(&vtName);
+		pclsObj->lpVtbl->Release(pclsObj);
 
-        VariantClear(&vtPid);
-        VariantClear(&vtCmd);
-        VariantClear(&vtName);
-        pclsObj->lpVtbl->Release(pclsObj);
-    }
+		if (0 != callback_result) {
+			break;
+		}
+	}
 
-    if (pEnumerator) pEnumerator->lpVtbl->Release(pEnumerator);
-    if (pSvc) pSvc->lpVtbl->Release(pSvc);
-    if (pLoc) pLoc->lpVtbl->Release(pLoc);
-    CoUninitialize();
+	if (NULL != pEnumerator) {
+		pEnumerator->lpVtbl->Release(pEnumerator);
+	}
+	if (NULL != pSvc) {
+		pSvc->lpVtbl->Release(pSvc);
+	}
+	if (NULL != pLoc) {
+		pLoc->lpVtbl->Release(pLoc);
+	}
+	CoUninitialize();
 
-    return callback_result;
+	return callback_result;
 }

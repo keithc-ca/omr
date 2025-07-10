@@ -2109,6 +2109,7 @@ omrsysinfo_get_processes(struct OMRPortLibrary *portLibrary, OMRProcessInfoCallb
 	}
 
 	BSTR ns = SysAllocString(L"ROOT\\CIMV2");
+	// FIXME missing check that ns is valid
 	hres = pLoc->lpVtbl->ConnectServer(pLoc, ns, NULL, NULL, NULL, 0, NULL, NULL, &pSvc);
 	SysFreeString(ns);
 	if (FAILED(hres)) {

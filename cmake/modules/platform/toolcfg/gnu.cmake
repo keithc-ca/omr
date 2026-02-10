@@ -72,6 +72,13 @@ endif()
 if(OMR_OS_LINUX)
 	list(APPEND OMR_PLATFORM_EXE_LINKER_OPTIONS "-Wl,-z,noexecstack")
 	list(APPEND OMR_PLATFORM_SHARED_LINKER_OPTIONS "-Wl,-z,noexecstack")
+
+	if((OMR_HOST_ARCH STREQUAL "ppc") AND (NOT CMAKE_C_COMPILER_IS_OPENXL))
+		# Avoid numerous pointless warnings:
+		#   note: the layout of aggregates containing vectors with 8-byte alignment has changed in GCC 5
+		omr_append_flags(CMAKE_C_FLAGS "-Wno-psabi")
+		omr_append_flags(CMAKE_CXX_FLAGS "-Wno-psabi")
+	endif()
 endif()
 
 if(OMR_HOST_ARCH STREQUAL "s390")

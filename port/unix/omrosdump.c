@@ -126,6 +126,12 @@ omrdump_create(struct OMRPortLibrary *portLibrary, char *filename, char *dumpTyp
 	}
 #endif /* aix_ppc */
 
+#if defined(OMR_TDUMP_VALIDATION)
+	if (NULL != strstr(dumpType, "IEATDUMP_VALIDATE")) {
+		return 1; /* pretend IEATDUMP validation failed */
+	}
+#endif /* defined(OMR_TDUMP_VALIDATION) */
+
 	if (NULL != filename) {
 		lastSep =  strrchr(filename, DIR_SEPARATOR);
 	}

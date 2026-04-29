@@ -83,38 +83,7 @@
  */
 		inline void __dropSMT() {  __asm__ __volatile__ ("or 31,31,31"); }
 		inline void __restoreSMT() {  __asm__ __volatile__ ("or 6,6,6"); }
-
-#elif defined(_MSC_VER) /* defined(LINUXPPC) */
-		inline void __yield() { _mm_pause(); }
-#elif defined(__GNUC__) && (defined(J9X86) || defined(J9HAMMER)) /* defined(_MSC_VER) */
-		inline void __yield() { __asm volatile ("pause"); }
-#elif defined(J9ZOS390) /* defined(__GNUC__) && (defined(J9X86) || defined(J9HAMMER)) */
-#pragma convlit(suspend)
-		inline void __yield() { __asm__ volatile (" nop 0"); }
-#pragma convlit(resume)
-#elif defined(AARCH64) /* defined(J9ZOS390) */
-		inline void __yield() { __asm__ volatile ("yield"); }
-#else /* defined(AARCH64) */
-		inline void __yield() { __asm volatile ("# AtomicOperations::__yield"); }
 #endif /* defined(AIXPPC) */
-
-#if defined(_MSC_VER)
-		/* use compiler intrinsic */
-#elif defined(LINUXPPC) || defined(AIXPPC)
-		inline void __nop() { __asm__ __volatile__ ("nop"); }
-		inline void __yield() { __asm__ __volatile__ ("or 27,27,27"); }
-#elif defined(LINUX) && (defined(S390) || defined(S39064))
-		/*
-		 * nop instruction requires operand https://bugzilla.redhat.com/show_bug.cgi?id=506417
-		 */
-		inline void __nop() { __asm__ volatile ("nop 0"); }
-#elif defined(J9ZOS390)
-#pragma convlit(suspend)
-		inline void __nop() { __asm__ volatile (" nop 0"); }
-#pragma convlit(resume)
-#else /* GCC && XL */
-		inline void __nop() { __asm__ volatile ("nop"); }
-#endif
 
 #if defined(AIXPPC) || defined(LINUXPPC)
 #if defined(__GNUC__) && !defined(__clang__)
@@ -247,9 +216,23 @@ public:
 	VMINLINE static void
 	yieldCPU()
 	{
-#if !defined(ATOMIC_SUPPORT_STUB)
-		__yield();
-#endif /* !defined(ATOMIC_SUPPORT_STUB) */
+#if defined(ATOMIC_SUPPORT_STUB)
+		/* do nothing */
+#elif defined(AIXPPC) || defined(LINUXPPC) /* defined(ATOMIC_SUPPORT_STUB) */
+		__asm__ __volatile__ ("or 27,27,27");
+#elif defined(_MSC_VER) /* defined(AIXPPC) || defined(LINUXPPC) */
+		_mm_pause();
+#elif defined(__GNUC__) && (defined(J9X86) || defined(J9HAMMER)) /* defined(_MSC_VER) */
+		__asm volatile ("pause");
+#elif defined(J9ZOS390) /* defined(__GNUC__) && (defined(J9X86) || defined(J9HAMMER)) */
+#pragma convlit(suspend)
+		__asm__ volatile (" nop 0");
+#pragma convlit(resume)
+#elif defined(AARCH64) /* defined(J9ZOS390) */
+		__asm__ volatile ("yield");
+#else /* defined(AARCH64) */
+		__asm volatile ("# AtomicOperations::__yield");
+#endif /* defined(ATOMIC_SUPPORT_STUB) */
 	}
 
 	/**
@@ -258,9 +241,24 @@ public:
 	VMINLINE static void
 	nop()
 	{
-#if !defined(ATOMIC_SUPPORT_STUB)
-		__nop();
-#endif /* !defined(ATOMIC_SUPPORT_STUB) */
+#if defined(ATOMIC_SUPPORT_STUB)
+		/* do nothing */
+#elif defined(_MSC_VER) /* defined(ATOMIC_SUPPORT_STUB) */
+		/* use compiler intrinsic */
+#elif defined(AIXPPC) || defined(LINUXPPC) /* defined(_MSC_VER) */
+		__asm__ __volatile__ ("nop");
+#elif defined(LINUX) && (defined(S390) || defined(S39064)) /* defined(AIXPPC) || defined(LINUXPPC) */
+		/*
+		 * nop instruction requires operand https://bugzilla.redhat.com/show_bug.cgi?id=506417
+		 */
+		__asm__ volatile ("nop 0");
+#elif defined(J9ZOS390) /* defined(LINUX) && (defined(S390) || defined(S39064)) */
+#pragma convlit(suspend)
+		__asm__ volatile (" nop 0");
+#pragma convlit(resume)
+#else /* defined(J9ZOS390) */
+		__asm__ volatile ("nop");
+#endif /* defined(ATOMIC_SUPPORT_STUB) */
 	}
 
 	/**

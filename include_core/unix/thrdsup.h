@@ -37,7 +37,7 @@
 #include "omrcomp.h"
 #include "omrutilbase.h"
 
-#if (defined(LINUX) || defined(OSX) || defined(MVS) || defined(J9ZOS390) || defined(OMRZTPF))
+#if defined(LINUX) || defined(OSX) || defined(MVS) || defined(J9ZOS390) || defined(OMRZTPF)
 #include <sys/time.h>
 #if defined(OSX)
 #include <mach/clock.h>
@@ -209,7 +209,7 @@ extern pthread_condattr_t *defaultCondAttr;
 
 /* POSIX systems on which sched_yield() is available define
    _POSIX_PRIORITY_SCHEDULING in <unistd.h>. */
-#if defined(_POSIX_PRIORITY_SCHEDULING)
+#if defined(_POSIX_PRIORITY_SCHEDULING) || defined(LINUX)
 #define THREAD_YIELD() (sched_yield())
 #elif defined(J9ZOS390)
 /* zos is odd in that it needs a null param to pthread_yield */

@@ -37,7 +37,7 @@
 #include <sys/time.h>
 #include <sys/utsname.h>
 
-#if !(defined(__GLIBC_PREREQ) && __GLIBC_PREREQ(2, 4))
+#if !defined(__GLIBC__) || !__GLIBC_PREREQ(2, 4)
 /* Compilation on RHEL 4 (for eventual 7.0 VM to Java 6.0 backport) */
 #include <asm/systemcfg.h>
 extern volatile struct systemcfg *systemcfgP_millis;
@@ -262,7 +262,7 @@ omrtime_startup(struct OMRPortLibrary *portLibrary)
 	int32_t rc = 0;
 	struct timespec ts;
 
-#if !(defined(__GLIBC_PREREQ) && __GLIBC_PREREQ(2, 4))
+#if !defined(__GLIBC__) || !__GLIBC_PREREQ(2, 4)
 	systemcfgP_millis = systemcfg_init();
 #else
 	int procfd;

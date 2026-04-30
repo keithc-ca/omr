@@ -29,6 +29,15 @@
 
 #include "omrcfg.h"
 
+#if !defined(__GLIBC__)
+
+// defined(__GLIBC__)
+//
+
+// __GLIBC__
+
+#endif /* !defined(__GLIBC__) */
+
 /* NOTE:  omrportlib.h include is at the bottom of this file until its dependencies on this file can be relaxed */
 
 /* fix for linux s390 32bit stdint vs unistd.h definition of intptr_t (see CMVC 73850) */

@@ -209,7 +209,7 @@ extern pthread_condattr_t *defaultCondAttr;
 
 /* POSIX systems on which sched_yield() is available define
    _POSIX_PRIORITY_SCHEDULING in <unistd.h>. */
-#if defined(_POSIX_PRIORITY_SCHEDULING) || defined(LINUX)
+#if defined(_POSIX_PRIORITY_SCHEDULING) || !defined(__GLIBC__)
 #define THREAD_YIELD() (sched_yield())
 #elif defined(J9ZOS390)
 /* zos is odd in that it needs a null param to pthread_yield */

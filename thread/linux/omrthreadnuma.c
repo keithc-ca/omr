@@ -292,7 +292,7 @@ omrthread_numa_init(omrthread_library_t threadLibrary)
 	}
 	/* find our current affinity mask since we will need it when removing any affinity binding from threads, later (since we still want to honour restrictions we inherited from the environment) */
 	CPU_ZERO(&defaultAffinityMask);
-#if __GLIBC_PREREQ(2,4) || defined(LINUXPPC)
+#if (defined(__GLIBC_PREREQ) && __GLIBC_PREREQ(2, 4)) || defined(LINUXPPC)
 	/*
 	 * LIR 902 : On Linux PPC, rolling up tool chain level to VAC 8 on RHEL 4.
 	 * The libc version on RHEL 4 requires 3 arg to sched_setaffinity.
@@ -391,7 +391,7 @@ omrthread_numa_set_node_affinity_nolock(omrthread_t thread, const uintptr_t *nod
 			memcpy(&affinityCPUs, &defaultAffinityMask, sizeof(cpu_set_t));
 		}
 		if ((threadIsStarted) && (0 == result)) {
-#if __GLIBC_PREREQ(2,4) || defined(LINUXPPC)
+#if (defined(__GLIBC_PREREQ) && __GLIBC_PREREQ(2, 4)) || defined(LINUXPPC)
 			/*
 			 * LIR 902 : On Linux PPC, rolling up tool chain level to VAC 8 on RHEL 4.
 			 * The libc version on RHEL 4 requires 3 arg to sched_setaffinity.
@@ -460,7 +460,7 @@ omrthread_numa_get_node_affinity(omrthread_t thread, uintptr_t *numaNodes, uintp
 			 * by an external program (see: http://www.linuxjournal.com/article/6799)
 			 */
 
-#if __GLIBC_PREREQ(2,4) || defined(LINUXPPC)
+#if (defined(__GLIBC_PREREQ) && __GLIBC_PREREQ(2, 4)) || defined(LINUXPPC)
 			/*
 			 * LIR 902 : On Linux PPC, rolling up tool chain level to VAC 8 on RHEL 4.
 			 * The libc version on RHEL 4 requires 3 arg to sched_getaffinity.

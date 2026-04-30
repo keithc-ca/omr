@@ -31,6 +31,8 @@
 #define _GNU_SOURCE
 #endif /* defined(LINUX) */
 
+#include "omrcfg.h"
+
 #include <stdio.h>
 #include <time.h>
 #include <sys/types.h>

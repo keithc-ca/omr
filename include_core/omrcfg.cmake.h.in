@@ -254,4 +254,8 @@
  */
 #cmakedefine OMR_TDUMP_VALIDATION
 
+#if !defined(__GLIBC_PREREQ)
+#define __GLIBC_PREREQ(major, minor) 0
+#endif /* !defined(__GLIBC_PREREQ) */
+
 #endif /* !defined(OMRCFG_H_) */

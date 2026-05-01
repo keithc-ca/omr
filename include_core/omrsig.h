@@ -108,10 +108,10 @@ sighandler_t bsd_signal(int signum, sighandler_t handler) OMRSIG_NO_THROW;
 #if !defined(J9ZOS390)
 sighandler_t sysv_signal(int signum, sighandler_t handler) OMRSIG_NO_THROW;
 #endif /* !defined(J9ZOS390) */
-#if defined(LINUX)
+#if defined(LINUX) && defined(__GLIBC__)
 __sighandler_t __sysv_signal(int sig, __sighandler_t handler) OMRSIG_NO_THROW;
 sighandler_t ssignal(int sig, sighandler_t handler) OMRSIG_NO_THROW;
-#endif /* defined(LINUX) */
+#endif /* defined(LINUX) && defined(__GLIBC__) */
 
 
 #endif /* !defined(OMR_OS_WINDOWS) */

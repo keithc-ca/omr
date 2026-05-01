@@ -459,7 +459,7 @@ omrsig_sigaction_internal(int signum, const struct sigaction *act, struct sigact
 	return rc;
 }
 
-#if defined(LINUX)
+#if defined(LINUX) && defined(__GLIBC__)
 
 __sighandler_t
 __sysv_signal(int sig, __sighandler_t handler) OMRSIG_NO_THROW
@@ -473,7 +473,7 @@ ssignal(int sig, sighandler_t handler) OMRSIG_NO_THROW
 	return omrsig_signal_internal(sig, handler);
 }
 
-#endif /* defined(LINUX) */
+#endif /* defined(LINUX) && defined(__GLIBC__) */
 
 #if defined(J9ZOS390)
 

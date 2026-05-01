@@ -190,7 +190,9 @@ const char *TR_PPCCallStackIterator::getProcedureName()
 }
 
 #elif defined(LINUX)
+#if !defined(OMR_OS_ALPINE)
 #include <execinfo.h>
+#endif /* !defined(OMR_OS_ALPINE) */
 #include <cxxabi.h>
 
 void TR_LinuxCallStackIterator::printSymbol(int32_t frame, char *sig, OMR::Logger *log)

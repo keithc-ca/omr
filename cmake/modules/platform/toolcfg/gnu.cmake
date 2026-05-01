@@ -69,6 +69,16 @@ if(OMR_ARCH_X86)
 	endif()
 endif()
 
+if(EXISTS "/etc/alpine-release")
+	set(IS_ALPINE TRUE)
+else()
+	set(IS_ALPINE FALSE)
+endif()
+
+if(OMR_OS_LINUX AND IS_ALPINE)
+	list(APPEND OMR_PLATFORM_COMPILE_OPTIONS -D_GNU_SOURCE)
+endif()
+
 if(OMR_OS_LINUX)
 	list(APPEND OMR_PLATFORM_EXE_LINKER_OPTIONS "-Wl,-z,noexecstack")
 	list(APPEND OMR_PLATFORM_SHARED_LINKER_OPTIONS "-Wl,-z,noexecstack")

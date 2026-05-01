@@ -19,6 +19,13 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 #############################################################################
 
+# Are we building on Alpine Linux (with MUSL instead of GLIBC)?
+if(EXISTS "/etc/alpine-release")
+	set(IS_ALPINE TRUE)
+else()
+	set(IS_ALPINE FALSE)
+endif()
+
 # disable warnings as errors for OpenXL
 # (see https://github.com/eclipse-omr/omr/issues/7583)
 if(NOT CMAKE_C_COMPILER_IS_OPENXL)
@@ -69,14 +76,12 @@ if(OMR_ARCH_X86)
 	endif()
 endif()
 
-if(EXISTS "/etc/alpine-release")
-	set(IS_ALPINE TRUE)
-else()
-	set(IS_ALPINE FALSE)
-endif()
 
 if(OMR_OS_LINUX AND IS_ALPINE)
-	list(APPEND OMR_PLATFORM_COMPILE_OPTIONS -D_GNU_SOURCE)
+	list(APPEND OMR_PLATFORM_COMPILE_OPTIONS
+		-D_GNU_SOURCE
+		-DOMR_OS_ALPINE
+	)
 endif()
 
 if(OMR_OS_LINUX)

@@ -36,7 +36,9 @@
 
 #include <dlfcn.h>
 #include <elf.h>
+#if !defined(OMR_OS_ALPINE)
 #include <execinfo.h>
+#endif /* !defined(OMR_OS_ALPINE) */
 #include <fcntl.h>
 #include <link.h>
 #include <stdlib.h>

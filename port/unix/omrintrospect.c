@@ -1429,7 +1429,12 @@ setup_native_thread(J9ThreadWalkState *state, thread_context *sigContext, int he
 			memcpy(state->current_thread->context, ((OMRUnixSignalInfo *)sigContext)->platformSignalInfo.context, size);
 		} else if (state->current_thread->thread_id == omrthread_get_ras_tid()) {
 			/* return context for current thread */
+#if defined(OMR_OS_ALPINE)
+			fprintf(stderr, "getcontext() not available on Alpine Linux - aborting.\n");
+			abort();
+#else /* defined(OMR_OS_ALPINE) */
 			getcontext((ucontext_t *)state->current_thread->context);
+#endif /* defined(OMR_OS_ALPINE) */
 		} else {
 			memcpy(state->current_thread->context, (void *)data->thread->context, size);
 		}

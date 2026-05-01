@@ -26,12 +26,9 @@
  * @brief process introspection support
  */
 
-#if defined(LINUX)
-/* _GNU_SOURCE forces GLIBC_2.0 sscanf/vsscanf/fscanf for RHEL5 compatability */
-#ifndef _GNU_SOURCE
+#if defined(LINUX) && !defined(_GNU_SOURCE)
 #define _GNU_SOURCE
-#endif
-#endif /* defined(LINUX) */
+#endif /* defined(LINUX) && !defined(_GNU_SOURCE) */
 
 #include <pthread.h>
 #include <ucontext.h>

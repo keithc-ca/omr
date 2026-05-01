@@ -25,10 +25,12 @@
  * @ingroup Thread
  * @brief NUMA support for Thread library.
  */
+
+#if defined(LINUX) && !defined(_GNU_SOURCE)
 /* _GNU_SOURCE must be defined for CPU_SETSIZE */
-#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
-#endif
+#endif /* defined(LINUX) && !defined(_GNU_SOURCE) */
+
 #include <ctype.h>
 #include <dirent.h>
 #include <fcntl.h>

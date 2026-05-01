@@ -20,12 +20,16 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
+#if defined(LINUX) && !defined(_GNU_SOURCE)
+#define _GNU_SOURCE
+#endif /* defined(LINUX) && !defined(_GNU_SOURCE) */
+
 #include "thrdsup.h"
 #include "unixpriority.h"
 #include "omrutilbase.h"
 #include "thread_internal.h" /* must be after thrdsup.h */
 
-#include <sched.h>	/* must be after <pthread.h> or DECUNIX kaks */
+#include <sched.h> /* must be after <pthread.h> or DECUNIX kaks */
 
 #include <stdio.h>
 #include <string.h>

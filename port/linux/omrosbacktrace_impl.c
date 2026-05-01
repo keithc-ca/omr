@@ -54,6 +54,15 @@ struct frameData {
 	uintptr_t capacity;
 };
 
+#if defined(OMR_OS_ALPINE)
+/* Stub for Alpine Linux. */
+static uintptr_t
+backtrace(void **address_array, uintptr_t capacity)
+{
+	return 0;
+}
+#endif /* defined(OMR_OS_ALPINE) */
+
 /*
  * NULL handler. We only care about preventing the signal from propagating up the call stack, no need to do
  * anything in the handler.
@@ -70,13 +79,8 @@ handler(struct OMRPortLibrary *portLibrary, uint32_t gpType, void *gpInfo, void 
 static uintptr_t
 protectedBacktrace(struct OMRPortLibrary *port, void *arg)
 {
-#if defined(OMR_OS_ALPINE)
-	/* backtrace will need to be implemented for MUSL */
-	return 0;
-#else /* defined(OMR_OS_ALPINE) */
 	struct frameData *addresses = (struct frameData *)arg;
 	return backtrace(addresses->address_array, addresses->capacity);
-#endif /* defined(OMR_OS_ALPINE) */
 }
 
 /*

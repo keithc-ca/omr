@@ -28,10 +28,10 @@
  * APIs for querying per-thread statistics: CPU usage, stack usage.
  */
 
-#if defined(LINUX)
+#if defined(LINUX) && !defined(_GNU_SOURCE)
 #define _GNU_SOURCE
 #include <sys/resource.h>
-#endif /* defined(LINUX) */
+#endif /* defined(LINUX) && !defined(_GNU_SOURCE) */
 
 #include <string.h> /* for memset() */
 #include "omrcfg.h"

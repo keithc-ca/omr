@@ -27,6 +27,10 @@
  * @ddr_namespace: default
  */
 
+#if defined(__GNUC__) && !defined(_GNU_SOURCE)
+#define _GNU_SOURCE
+#endif /* defined(__GNUC__) && !defined(_GNU_SOURCE) */
+
 #include "omrcfg.h"
 #if defined(LINUX)
 #include "omrcgroup.h"

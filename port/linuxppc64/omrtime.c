@@ -27,9 +27,9 @@
  */
 
 /* _GNU_SOURCE forces GLIBC_2.0 sscanf/vsscanf/fscanf for RHEL5 compatability */
-#if defined(LINUX)
+#if !defined(_GNU_SOURCE)
 #define _GNU_SOURCE
-#endif /* defined(LINUX) */
+#endif /* !defined(_GNU_SOURCE) */
 
 #include "omrcfg.h"
 

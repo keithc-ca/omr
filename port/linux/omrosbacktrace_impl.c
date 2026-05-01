@@ -25,9 +25,9 @@
  * @ingroup Port
  * @brief Stack backtracing support
  */
-#ifndef _GNU_SOURCE
+#if !defined(_GNU_SOURCE)
 #define _GNU_SOURCE
-#endif
+#endif /* !defined(_GNU_SOURCE) */
 
 /*
  * Include system header files first because omrsignal_context.h removes the

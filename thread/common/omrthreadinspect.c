@@ -33,9 +33,9 @@
 
 #if defined(LINUX)
 /* Allowing the use of pthread_attr_getstack in omrthread_get_stack_range */
-#ifndef _GNU_SOURCE
+#if !defined(_GNU_SOURCE)
 #define _GNU_SOURCE
-#endif
+#endif /* !defined(_GNU_SOURCE) */
 #include <features.h>
 #elif defined(OSX)
 #include <pthread.h>

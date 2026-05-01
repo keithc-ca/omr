@@ -27,9 +27,9 @@
  */
 
 /* for syscall */
-#ifndef _GNU_SOURCE
+#if !defined(_GNU_SOURCE)
 #define _GNU_SOURCE
-#endif
+#endif /* !defined(_GNU_SOURCE) */
 
 #include "omrformatconsts.h"
 #include "omrport.h"

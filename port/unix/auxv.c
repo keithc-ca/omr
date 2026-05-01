@@ -24,7 +24,10 @@
  * suffer the consequences if you're an ingenious fool and dlopen this library
  * after you've moved the env via a call to setenv!  Just don't do it.  */
 
+#if defined(LINUX) && !defined(_GNU_SOURCE)
 #define _GNU_SOURCE
+#endif /* defined(LINUX) && !defined(_GNU_SOURCE) */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>

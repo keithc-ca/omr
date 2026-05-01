@@ -195,6 +195,21 @@ const char *TR_PPCCallStackIterator::getProcedureName()
 #endif /* !defined(OMR_OS_ALPINE) */
 #include <cxxabi.h>
 
+#if defined(OMR_OS_ALPINE)
+/* Stubs for Alpine Linux. */
+static uintptr_t
+backtrace(void **address_array, uintptr_t capacity)
+{
+	return 0;
+}
+
+static char **
+backtrace_symbols(void **address_array, uintptr_t size)
+{
+	return NULL;
+}
+#endif /* defined(OMR_OS_ALPINE) */
+
 void TR_LinuxCallStackIterator::printSymbol(int32_t frame, char *sig, OMR::Logger *log)
 {
     char lib[256];

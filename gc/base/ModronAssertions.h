@@ -85,24 +85,10 @@ do {\
 	}\
 } while (false)
 
-/* Keep next three definitions for compatibility temporary */
-/* Two printed parameters macro */
-#define Assert_GC_true_with_message2(__env__,__condition,__message,__parameter1,__parameter2) \
-		Assert_GC_true_with_message(__env__,__condition,__message,__parameter1,__parameter2)
-
-/* THree printed parameters macro */
-#define Assert_GC_true_with_message3(__env__,__condition,__message,__parameter1,__parameter2,__parameter3) \
-		Assert_GC_true_with_message(__env__,__condition,__message,__parameter1,__parameter2,__parameter3)
-
-
-/* Four printed parameters macro */
-#define Assert_GC_true_with_message4(__env__,__condition,__message,__parameter1,__parameter2,__parameter3,__parameter4) \
-		Assert_GC_true_with_message(__env__,__condition,__message,__parameter1,__parameter2,__parameter3,__parameter4)
-
 #define Assert_MM_objectAligned(__env__,__pointer) \
 do {\
 	if((uintptr_t)(__pointer) & (__env__->getObjectAlignmentInBytes() - 1)) {\
-		Assert_GC_true_with_message2(__env__,false, "Pointer: %p has is not object aligned (to %zu bytes) \n", __pointer, __env__->getObjectAlignmentInBytes());\
+		Assert_GC_true_with_message(__env__,false, "Pointer: %p has is not object aligned (to %zu bytes) \n", __pointer, __env__->getObjectAlignmentInBytes());\
 	}\
 } while(false)
 
@@ -115,11 +101,6 @@ do {\
 #define Assert_MM_invalidJNICall() Assert_MM_invalidJNICall_internal()
 
 #define Assert_GC_true_with_message(__env__,__condition,__message,__parameter) Assert_MM_true(__condition)
-
-/* Keep next three definitions for compatibility temporary */
-#define Assert_GC_true_with_message2(__env__,__condition,__message,__parameter1,__parameter2) Assert_MM_true(__condition)
-#define Assert_GC_true_with_message3(__env__,__condition,__message,__parameter1,__parameter2,__parameter3) Assert_MM_true(__condition)
-#define Assert_GC_true_with_message4(__env__,__condition,__message,__parameter1,__parameter2,__parameter3,__parameter4) Assert_MM_true(__condition)
 
 #define Assert_MM_objectAligned(__env__,__pointer) Assert_MM_true_internal((uintptr_t)(__pointer) & (__env__->getObjectAlignmentInBytes() - 1))
 #endif /* defined(OMR_GC_DEBUG_ASSERTS) */

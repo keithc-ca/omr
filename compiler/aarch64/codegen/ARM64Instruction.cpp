@@ -112,7 +112,7 @@ void TR::ARM64AdminInstruction::assignRegisters(TR_RegisterKinds kindToBeAssigne
 
         // Step 2 : loop through and set up the new associations (both on the machine and by associating the virtual
         // registers with their real dependencies)
-        auto depCond = self()->getDependencyConditions();
+        auto depCond = getDependencyConditions();
         auto depGroup = depCond->getPostConditions();
         auto numPostCond = depCond->getNumPostConditions();
         for (int32_t j = 0; j < numPostCond; ++j) {

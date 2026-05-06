@@ -114,15 +114,15 @@ bool OMR::X86::Instruction::isPatchBarrier(TR::CodeGenerator *cg)
 
 void OMR::X86::Instruction::assignRegisters(TR_RegisterKinds kindsToBeAssigned)
 {
-    if (!self()->getDependencyConditions()) {
+    if (!getDependencyConditions()) {
         // Fast path when there are no dependency conditions.
         //
         return;
     }
 
     if (getOpCodeValue() != OP::assocreg) {
-        self()->getDependencyConditions()->assignPostConditionRegisters(self(), kindsToBeAssigned, cg());
-        self()->getDependencyConditions()->assignPreConditionRegisters(self(), kindsToBeAssigned, cg());
+        getDependencyConditions()->assignPostConditionRegisters(self(), kindsToBeAssigned, cg());
+        getDependencyConditions()->assignPreConditionRegisters(self(), kindsToBeAssigned, cg());
     } else if ((getOpCodeValue() == OP::assocreg) && cg()->enableRegisterAssociations()) {
         if (kindsToBeAssigned & TR_GPR_Mask) {
             TR::Machine *machine = cg()->machine();
@@ -145,8 +145,8 @@ void OMR::X86::Instruction::assignRegisters(TR_RegisterKinds kindsToBeAssigned)
             // Next loop through and set up the new associations (both on the machine
             // and by associating the virtual registers with their real dependencies)
             //
-            TR::RegisterDependencyGroup *depGroup = self()->getDependencyConditions()->getPostConditions();
-            for (auto j = 0U; j < self()->getDependencyConditions()->getNumPostConditions(); ++j) {
+            TR::RegisterDependencyGroup *depGroup = getDependencyConditions()->getPostConditions();
+            for (auto j = 0U; j < getDependencyConditions()->getNumPostConditions(); ++j) {
                 TR::RegisterDependency *dep = depGroup->getRegisterDependency(j);
                 machine->setVirtualAssociatedWithReal(dep->getRealRegister(), dep->getRegister());
             }
@@ -169,8 +169,8 @@ void OMR::X86::Instruction::assignRegisters(TR_RegisterKinds kindsToBeAssigned)
             }
 
             // Set new XMM associations from dependencies
-            TR::RegisterDependencyGroup *depGroup = self()->getDependencyConditions()->getPostConditions();
-            for (auto j = 0U; j < self()->getDependencyConditions()->getNumPostConditions(); ++j) {
+            TR::RegisterDependencyGroup *depGroup = getDependencyConditions()->getPostConditions();
+            for (auto j = 0U; j < getDependencyConditions()->getNumPostConditions(); ++j) {
                 TR::RegisterDependency *dep = depGroup->getRegisterDependency(j);
                 TR::Register *vr = dep->getRegister();
                 if (vr && (vr->getKind() == TR_FPR || vr->getKind() == TR_VRF)) {
@@ -185,30 +185,29 @@ void OMR::X86::Instruction::assignRegisters(TR_RegisterKinds kindsToBeAssigned)
 
 bool OMR::X86::Instruction::refsRegister(TR::Register *reg)
 {
-    return self()->getDependencyConditions() ? _conditions->refsRegister(reg) : false;
+    return getDependencyConditions() ? _conditions->refsRegister(reg) : false;
 }
 
 bool OMR::X86::Instruction::defsRegister(TR::Register *reg)
 {
-    return self()->getDependencyConditions() ? _conditions->defsRegister(reg) : false;
+    return getDependencyConditions() ? _conditions->defsRegister(reg) : false;
 }
 
 bool OMR::X86::Instruction::usesRegister(TR::Register *reg)
 {
-    return self()->getDependencyConditions() ? _conditions->usesRegister(reg) : false;
+    return getDependencyConditions() ? _conditions->usesRegister(reg) : false;
 }
 
 bool OMR::X86::Instruction::dependencyRefsRegister(TR::Register *reg)
 {
-    return self()->getDependencyConditions() ? _conditions->refsRegister(reg) : false;
+    return getDependencyConditions() ? _conditions->refsRegister(reg) : false;
 }
 
 #if defined(DEBUG) || defined(PROD_WITH_ASSUMES)
 uint32_t OMR::X86::Instruction::totalReferencedGPRegisters(TR::CodeGenerator *cg)
 {
-    if (self()->getDependencyConditions()) {
-        return self()->getNumOperandReferencedGPRegisters()
-            + self()->getDependencyConditions()->numReferencedGPRegisters(cg);
+    if (getDependencyConditions()) {
+        return self()->getNumOperandReferencedGPRegisters() + getDependencyConditions()->numReferencedGPRegisters(cg);
     }
 
     return self()->getNumOperandReferencedGPRegisters();
@@ -243,7 +242,7 @@ void OMR::X86::Instruction::clobberRegsForRematerialisation()
     // We assume most instructions modify all registers that appear in their
     // postconditions, with a few exceptions.
     //
-    if (cg()->enableRematerialisation() && self()->getDependencyConditions()
+    if (cg()->enableRematerialisation() && getDependencyConditions()
         && (getOpCodeValue()
             != OP::assocreg) // reg associations aren't really instructions, so they don't modify anything
         && (getOpCodeValue() != OP::label) // labels must already be handled properly for a variety of reasons
@@ -254,8 +253,8 @@ void OMR::X86::Instruction::clobberRegsForRematerialisation()
         // instruction that kills the rematerialisable range of a register.
         //
         TR::ClobberingInstruction *clob = NULL;
-        TR::RegisterDependencyGroup *post = self()->getDependencyConditions()->getPostConditions();
-        for (uint32_t i = 0; i < self()->getDependencyConditions()->getNumPostConditions(); i++) {
+        TR::RegisterDependencyGroup *post = getDependencyConditions()->getPostConditions();
+        for (uint32_t i = 0; i < getDependencyConditions()->getNumPostConditions(); i++) {
             TR::Register *reg = post->getRegisterDependency(i)->getRegister();
             if (reg->isDiscardable()) {
                 if (!clob) {

@@ -388,7 +388,7 @@ void OMR::Z::Instruction::useRegister(TR::Register *reg, bool isDummy)
 
 bool OMR::Z::Instruction::refsRegister(TR::Register *reg)
 {
-    return self()->getDependencyConditions() ? self()->getDependencyConditions()->refsRegister(reg) : false;
+    return getDependencyConditions() ? getDependencyConditions()->refsRegister(reg) : false;
 }
 
 bool OMR::Z::Instruction::defsAnyRegister(TR::Register *reg)
@@ -747,7 +747,7 @@ void OMR::Z::Instruction::assignRegisters(TR_RegisterKinds kindToBeAssigned)
 
             // Step 2 : loop through and set up the new associations (both on the machine and by associating the virtual
             // registers with their real dependencies)
-            TR::RegisterDependencyGroup *depGroup = self()->getDependencyConditions()->getPostConditions();
+            TR::RegisterDependencyGroup *depGroup = getDependencyConditions()->getPostConditions();
             for (int32_t j = 0; j < last; ++j) {
                 TR::Register *virtReg = depGroup->getRegisterDependency(j)->getRegister();
                 machine->setVirtualAssociatedWithReal((TR::RealRegister::RegNum)(j + 1), virtReg);
@@ -771,10 +771,10 @@ void OMR::Z::Instruction::assignRegisters(TR_RegisterKinds kindToBeAssigned)
         if (deps) // merge the dependency into the EX deps
         {
             outOfLineEXInstr->resetDependencyConditions();
-            TR::RegisterDependencyConditions *exDeps = (self())->getDependencyConditions();
+            TR::RegisterDependencyConditions *exDeps = getDependencyConditions();
             TR::RegisterDependencyConditions *newDeps
                 = new (cg()->trHeapMemory()) TR::RegisterDependencyConditions(deps, exDeps, cg());
-            (self())->setDependencyConditionsNoBookKeeping(newDeps);
+            setDependencyConditionsNoBookKeeping(newDeps);
         }
 
         outOfLineEXInstr->setPrev(savePrev); // Restore Prev() of snippet
@@ -1246,8 +1246,8 @@ void OMR::Z::Instruction::assignOrderedRegisters(TR_RegisterKinds kindToBeAssign
         }
     }
 
-    if (self()->getDependencyConditions()) {
-        self()->getDependencyConditions()->assignPreConditionRegisters(getPrev(), kindToBeAssigned, cg());
+    if (getDependencyConditions()) {
+        getDependencyConditions()->assignPreConditionRegisters(getPrev(), kindToBeAssigned, cg());
     }
 
     // unblock blocked targetRegs
@@ -1320,9 +1320,9 @@ void OMR::Z::Instruction::assignRegistersAndDependencies(TR_RegisterKinds kindTo
     // Any register or memory references must be blocked before the condition
     // is applied, then they must be subsequently unblocked.
     //
-    if (self()->getDependencyConditions()) {
+    if (getDependencyConditions()) {
         self()->block(_sourceReg, _sourceRegSize, _targetReg, _targetRegSize, _sourceMem, _targetMem);
-        self()->getDependencyConditions()->assignPostConditionRegisters(self(), kindToBeAssigned, cg());
+        getDependencyConditions()->assignPostConditionRegisters(self(), kindToBeAssigned, cg());
 
         // FPR and VRF register files overlap. Some of the FPRs are non-volatile but if they hold vector data
         // that part of the data would not be preserved. This code looks at the data stored in non-volatile FPRs
@@ -1395,7 +1395,7 @@ int32_t OMR::Z::Instruction::renameRegister(TR::Register *from, TR::Register *to
         }
     }
 
-    TR::RegisterDependencyConditions *conds = self()->getDependencyConditions();
+    TR::RegisterDependencyConditions *conds = getDependencyConditions();
     if (conds) {
         TR::RegisterDependencyGroup *preConds = conds->getPreConditions();
         TR::RegisterDependencyGroup *postConds = conds->getPostConditions();
@@ -1517,7 +1517,7 @@ void OMR::Z::Instruction::setUseDefRegisters(bool updateDependencies)
 
     uint32_t indexSource = 0, indexTarget = 0, i;
     TR::RegisterPair *regPair;
-    TR::RegisterDependencyConditions *dependencies = self()->getDependencyConditions();
+    TR::RegisterDependencyConditions *dependencies = getDependencyConditions();
     if (cg()->getCodeGeneratorPhase() == TR::CodeGenPhase::PeepholePhase) {
         // In Peephole Phase, UseDefRegisters need to reset. The check on non Peephole Phase needs to be avoided here.
         if ((_useRegs != NULL && _useRegs->size() != 0) || (_defRegs != NULL && _defRegs->size() != 0)) {

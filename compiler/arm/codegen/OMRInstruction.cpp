@@ -77,14 +77,14 @@ OMR::ARM::Instruction::Instruction(TR::Node *node, TR::CodeGenerator *cg)
     : OMR::InstructionConnector(cg, TR::InstOpCode::bad, node)
 {
     self()->setConditionCode(ARMConditionCodeAL);
-    self()->setDependencyConditions(NULL);
+    setDependencyConditions(NULL);
 }
 
 OMR::ARM::Instruction::Instruction(TR::InstOpCode::Mnemonic op, TR::Node *node, TR::CodeGenerator *cg)
     : OMR::InstructionConnector(cg, op, node)
 {
     self()->setConditionCode(ARMConditionCodeAL);
-    self()->setDependencyConditions(NULL);
+    setDependencyConditions(NULL);
 }
 
 OMR::ARM::Instruction::Instruction(TR::Instruction *precedingInstruction, TR::InstOpCode::Mnemonic op, TR::Node *node,
@@ -92,7 +92,7 @@ OMR::ARM::Instruction::Instruction(TR::Instruction *precedingInstruction, TR::In
     : OMR::InstructionConnector(cg, precedingInstruction, op, node)
 {
     self()->setConditionCode(ARMConditionCodeAL);
-    self()->setDependencyConditions(NULL);
+    setDependencyConditions(NULL);
 }
 
 OMR::ARM::Instruction::Instruction(TR::InstOpCode::Mnemonic op, TR::Node *node, TR::RegisterDependencyConditions *cond,
@@ -100,7 +100,7 @@ OMR::ARM::Instruction::Instruction(TR::InstOpCode::Mnemonic op, TR::Node *node, 
     : OMR::InstructionConnector(cg, op, node)
 {
     self()->setConditionCode(ARMConditionCodeAL);
-    self()->setDependencyConditions(cond);
+    setDependencyConditions(cond);
     if (cond)
         cond->incRegisterTotalUseCounts(cg);
 }
@@ -110,7 +110,7 @@ OMR::ARM::Instruction::Instruction(TR::Instruction *precedingInstruction, TR::In
     : OMR::InstructionConnector(cg, precedingInstruction, op, node)
 {
     self()->setConditionCode(ARMConditionCodeAL);
-    self()->setDependencyConditions(cond);
+    setDependencyConditions(cond);
     if (cond)
         cond->incRegisterTotalUseCounts(cg);
 }
@@ -125,22 +125,22 @@ TR::Register *OMR::ARM::Instruction::getMemoryDataRegister() { return NULL; }
 
 bool OMR::ARM::Instruction::refsRegister(TR::Register *reg)
 {
-    return (self()->getDependencyConditions() && self()->getDependencyConditions()->refsRegister(reg));
+    return (getDependencyConditions() && getDependencyConditions()->refsRegister(reg));
 }
 
 bool OMR::ARM::Instruction::defsRegister(TR::Register *reg)
 {
-    return (self()->getDependencyConditions() && self()->getDependencyConditions()->defsRegister(reg));
+    return (getDependencyConditions() && getDependencyConditions()->defsRegister(reg));
 }
 
 bool OMR::ARM::Instruction::defsRealRegister(TR::Register *reg)
 {
-    return (self()->getDependencyConditions() && self()->getDependencyConditions()->defsRealRegister(reg));
+    return (getDependencyConditions() && getDependencyConditions()->defsRealRegister(reg));
 }
 
 bool OMR::ARM::Instruction::usesRegister(TR::Register *reg)
 {
-    return (self()->getDependencyConditions() && self()->getDependencyConditions()->usesRegister(reg));
+    return (getDependencyConditions() && getDependencyConditions()->usesRegister(reg));
 }
 
 bool OMR::ARM::Instruction::dependencyRefsRegister(TR::Register *reg) { return false; }
@@ -157,9 +157,9 @@ int32_t OMR::ARM::Instruction::getMachineOpCode() { return getOpCodeValue(); }
 
 void OMR::ARM::Instruction::assignRegisters(TR_RegisterKinds kindToBeAssigned)
 {
-    if (self()->getDependencyConditions()) {
-        self()->getDependencyConditions()->assignPostConditionRegisters(self(), kindToBeAssigned, cg());
-        self()->getDependencyConditions()->assignPreConditionRegisters(getPrev(), kindToBeAssigned, cg());
+    if (getDependencyConditions()) {
+        getDependencyConditions()->assignPostConditionRegisters(self(), kindToBeAssigned, cg());
+        getDependencyConditions()->assignPreConditionRegisters(getPrev(), kindToBeAssigned, cg());
     }
 }
 

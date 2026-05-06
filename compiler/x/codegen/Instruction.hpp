@@ -73,7 +73,7 @@ TR::Instruction::Instruction(TR::RegisterDependencyConditions *cond, TR::Node *n
     TR::CodeGenerator *cg, OMR::X86::Encoding encoding)
     : OMR::InstructionConnector(cg, op, node)
 {
-    self()->setDependencyConditions(cond);
+    setDependencyConditions(cond);
     self()->setEncodingMethod(encoding);
     self()->initialize(cg, cond, op, true);
 }
@@ -82,7 +82,7 @@ TR::Instruction::Instruction(TR::RegisterDependencyConditions *cond, OP::Mnemoni
     TR::Instruction *precedingInstruction, TR::CodeGenerator *cg, OMR::X86::Encoding encoding)
     : OMR::InstructionConnector(cg, precedingInstruction, op)
 {
-    self()->setDependencyConditions(cond);
+    setDependencyConditions(cond);
     self()->setEncodingMethod(encoding);
     self()->initialize(cg, cond, op);
 }

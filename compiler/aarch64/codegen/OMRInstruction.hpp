@@ -146,14 +146,14 @@ public:
      * @brief Gets the register dependency conditions
      * @return register dependency conditions
      */
-    virtual TR::RegisterDependencyConditions *getDependencyConditions() { return _conditions; }
+    OMR_FINAL TR::RegisterDependencyConditions *getDependencyConditions() { return _conditions; }
 
     /**
      * @brief Sets the register dependency conditions
      * @param[in] cond : register dependency conditions
      * @return register dependency conditions
      */
-    TR::RegisterDependencyConditions *setDependencyConditions(TR::RegisterDependencyConditions *cond)
+    OMR_FINAL TR::RegisterDependencyConditions *setDependencyConditions(TR::RegisterDependencyConditions *cond)
     {
         return (_conditions = cond);
     }

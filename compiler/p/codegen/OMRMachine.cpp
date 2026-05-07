@@ -1574,7 +1574,7 @@ TR::RegisterDependencyConditions *OMR::Power::Machine::createCondForLiveAndSpill
                                                 // will cover all VRFs
 
     for (int32_t i = TR::RealRegister::FirstGPR; i <= endReg; i++) {
-        TR::RealRegister *realReg = self()->getRealRegister((TR::RealRegister::RegNum)i);
+        TR::RealRegister *realReg = getRealRegister((TR::RealRegister::RegNum)i);
         TR_ASSERT(realReg->getState() == TR::RealRegister::Assigned || realReg->getState() == TR::RealRegister::Free
                 || realReg->getState() == TR::RealRegister::Locked,
             "cannot handle realReg state %d, (block state is %d)\n", realReg->getState(), TR::RealRegister::Blocked);
@@ -1589,7 +1589,7 @@ TR::RegisterDependencyConditions *OMR::Power::Machine::createCondForLiveAndSpill
     if (c) {
         deps = new (cg()->trHeapMemory()) TR::RegisterDependencyConditions(0, c, cg()->trMemory());
         for (int32_t j = TR::RealRegister::FirstGPR; j <= endReg; j++) {
-            TR::RealRegister *realReg = self()->getRealRegister((TR::RealRegister::RegNum)j);
+            TR::RealRegister *realReg = getRealRegister((TR::RealRegister::RegNum)j);
             if (realReg->getState() == TR::RealRegister::Assigned) {
                 TR::Register *virtReg = realReg->getAssignedRegister();
                 TR_ASSERT(!spilledRegisterList

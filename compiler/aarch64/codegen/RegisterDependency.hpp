@@ -60,6 +60,17 @@ public:
 };
 } // namespace TR
 
+inline TR::RegisterDependencyConditions *RegDeps(TR::CodeGenerator *cg, TR::Node *node, uint32_t additionalRegDeps,
+    TR::Instruction **cursorPtr = NULL)
+{
+    return new (cg->trHeapMemory()) TR::RegisterDependencyConditions(cg, node, additionalRegDeps, cursorPtr);
+}
+
+inline TR::RegisterDependencyConditions *RegDeps(uint32_t numPreConds, uint32_t numPostConds, TR::CodeGenerator *cg)
+{
+    return new (cg->trHeapMemory()) TR::RegisterDependencyConditions(numPreConds, numPostConds, cg->trMemory());
+}
+
 /**
  * @brief Generates RegisterDependencyConditions
  * @param[in] cg : CodeGenerator object
@@ -67,11 +78,15 @@ public:
  * @param[in] extranum : additional # of conditions
  * @param[in] cursorPtr : instruction cursor
  * @return generated RegisterDependencyConditions
+ *
+ * THE USE OF THE generateRegisterDependencyConditions() FUNCTIONS IS
+ * DEPRECATED IN FAVOUR OF THE MORE CONCISE RegDeps() FORMS AND SHOULD NOT BE
+ * USED. THESE DEPRECATED FORMS WILL BE REMOVED IN A FUTURE OMR RELEASE.
  */
 inline TR::RegisterDependencyConditions *generateRegisterDependencyConditions(TR::CodeGenerator *cg, TR::Node *node,
     uint32_t extranum, TR::Instruction **cursorPtr = NULL)
 {
-    return new (cg->trHeapMemory()) TR::RegisterDependencyConditions(cg, node, extranum, cursorPtr);
+    return RegDeps(cg, node, extranum, cursorPtr);
 }
 
 #endif

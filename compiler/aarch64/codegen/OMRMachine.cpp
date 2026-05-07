@@ -1011,8 +1011,7 @@ void OMR::ARM64::Machine::createRegisterAssociationDirective(TR::Instruction *cu
 {
     int32_t first = TR::RealRegister::FirstGPR;
     int32_t last = TR::RealRegister::LastAssignableFPR;
-    TR::RegisterDependencyConditions *associations
-        = new (cg()->trHeapMemory()) TR::RegisterDependencyConditions(0, last, cg()->trMemory());
+    auto *associations = RegDeps(0, last, cg());
 
     // Go through the current associations held in the machine and put a copy of
     // that state out into the stream after the cursor
@@ -1133,7 +1132,7 @@ TR::RegisterDependencyConditions *OMR::ARM64::Machine::createCondForLiveAndSpill
     TR::RegisterDependencyConditions *deps = NULL;
 
     if (c) {
-        deps = new (cg()->trHeapMemory()) TR::RegisterDependencyConditions(0, c, cg()->trMemory());
+        deps = RegDeps(0, c, cg());
         for (i = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastAssignableFPR; i++) {
             TR::RealRegister *realReg = self()->getRealRegister(static_cast<TR::RealRegister::RegNum>(i));
             if (realReg->getState() == TR::RealRegister::Assigned) {

@@ -538,7 +538,7 @@ static TR::Instruction *iffcmpHelper(TR::Node *node, TR::ARM64ConditionCode cc, 
 
         cg->evaluate(thirdChild);
 
-        TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions(cg, thirdChild, 0);
+        auto *deps = RegDeps(cg, thirdChild, 0);
         if (!needsExplicitUnorderedCheck) {
             result = generateConditionalBranchInstruction(cg, node, dstLabel, cc, deps);
         } else {

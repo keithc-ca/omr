@@ -5691,8 +5691,7 @@ TR::Register *commonStoreEvaluator(TR::Node *node, TR::InstOpCode::Mnemonic op, 
             && valueChild->isConstZeroValue() && (valueChild->getRegister() == NULL))) {
         TR::Register *zeroReg = cg->allocateRegister();
         generateMemSrc1Instruction(cg, op, node, tempMR, zeroReg);
-        TR::RegisterDependencyConditions *deps
-            = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 1, cg->trMemory());
+        auto *deps = RegDeps(0, 1, cg);
         deps->addPostCondition(zeroReg, TR::RealRegister::xzr);
         generateLabelInstruction(cg, TR::InstOpCode::label, node, generateLabelSymbol(cg), deps);
         cg->stopUsingRegister(zeroReg);
@@ -5732,8 +5731,7 @@ TR::Register *OMR::ARM64::TreeEvaluator::bstoreEvaluator(TR::Node *node, TR::Cod
                 TR::MemoryReference *tempMR = TR::MemoryReference::createWithRootLoadOrStore(cg, node);
                 TR::SymbolReference *patchGCRHelperRef
                     = cg->symRefTab()->findOrCreateRuntimeHelper(TR_ARM64PatchGCRHelper);
-                TR::RegisterDependencyConditions *deps
-                    = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 2, cg->trMemory());
+                auto *deps = RegDeps(0, 2, cg);
                 TR::Register *tempReg = cg->allocateRegister();
                 deps->addPostCondition(tempMR->getBaseRegister(), TR::RealRegister::x0);
                 deps->addPostCondition(tempReg, TR::RealRegister::x1);
@@ -5887,8 +5885,7 @@ TR::Register *OMR::ARM64::TreeEvaluator::arraytranslateEvaluator(TR::Node *node,
     TR::Register *inputLenReg = cg->gprClobberEvaluate(node->getChild(4));
     TR::Register *outputLenReg = cg->allocateRegister();
 
-    TR::RegisterDependencyConditions *deps
-        = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(1, numDeps, cg->trMemory());
+    auto *deps = RegDeps(1, numDeps, cg);
 
     deps->addPreCondition(inputReg, TR::RealRegister::x0);
 
@@ -6111,8 +6108,7 @@ TR::Register *OMR::ARM64::TreeEvaluator::arraysetEvaluator(TR::Node *node, TR::C
         }
         if ((valueReg != NULL) && isValueZero) {
             TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
-            TR::RegisterDependencyConditions *conditions
-                = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 1, cg->trMemory());
+            auto *conditions = RegDeps(0, 1, cg);
             conditions->addPostCondition(valueReg, TR::RealRegister::xzr);
             generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, conditions);
         }
@@ -6311,8 +6307,7 @@ TR::Register *OMR::ARM64::TreeEvaluator::arraysetEvaluator(TR::Node *node, TR::C
         }
 
         /* dstReg, lengthReg, valueReg, and registers allocated through SRM */
-        TR::RegisterDependencyConditions *conditions = new (cg->trHeapMemory())
-            TR::RegisterDependencyConditions(0, 3 + srm->numAvailableRegisters(), cg->trMemory());
+        auto *conditions = RegDeps(0, 3 + srm->numAvailableRegisters(), cg);
         conditions->addPostCondition(dstReg, TR::RealRegister::NoReg);
         conditions->addPostCondition(lengthReg, TR::RealRegister::NoReg);
         conditions->addPostCondition(valueReg, isValueZero ? TR::RealRegister::xzr : TR::RealRegister::NoReg);
@@ -6648,8 +6643,7 @@ static TR::Register *arraycmpEvaluatorHelper(TR::Node *node, TR::CodeGenerator *
     }
 
     /* savedSrc1Reg, src2Reg, lengthReg, resultReg, and registers allocated through SRM */
-    TR::RegisterDependencyConditions *conditions = new (cg->trHeapMemory())
-        TR::RegisterDependencyConditions(0, 4 + srm->numAvailableRegisters(), cg->trMemory());
+    auto *conditions = RegDeps(0, 4 + srm->numAvailableRegisters(), cg);
     conditions->addPostCondition(savedSrc1Reg, TR::RealRegister::NoReg);
     conditions->addPostCondition(src2Reg, TR::RealRegister::NoReg);
     conditions->addPostCondition(lengthReg, TR::RealRegister::NoReg);
@@ -6953,8 +6947,7 @@ static void inlinePrimitiveForwardArraycopy(TR::Node *node, TR::Register *srcAdd
     //
 
     // x0-x3 and v30-v31 are destroyed in the helper
-    TR::RegisterDependencyConditions *deps
-        = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(6, 6, cg->trMemory());
+    auto *deps = RegDeps(6, 6, cg);
     TR::addDependency(deps, lengthReg, TR::RealRegister::x0, TR_GPR, cg);
     TR::addDependency(deps, srcAddrReg, TR::RealRegister::x1, TR_GPR, cg);
     TR::addDependency(deps, dstAddrReg, TR::RealRegister::x2, TR_GPR, cg);
@@ -7149,8 +7142,7 @@ TR::Register *OMR::ARM64::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::
         inlinePrimitiveForwardArraycopy(node, srcAddrReg, dstAddrReg, lengthReg, cg);
     } else {
         // x0-x3 and v30-v31 are destroyed in the helper
-        TR::RegisterDependencyConditions *deps
-            = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(6, 6, cg->trMemory());
+        auto *deps = RegDeps(6, 6, cg);
         TR::addDependency(deps, lengthReg, TR::RealRegister::x0, TR_GPR, cg);
         TR::addDependency(deps, srcAddrReg, TR::RealRegister::x1, TR_GPR, cg);
         TR::addDependency(deps, dstAddrReg, TR::RealRegister::x2, TR_GPR, cg);
@@ -7366,7 +7358,7 @@ TR::Register *OMR::ARM64::TreeEvaluator::BBStartEvaluator(TR::Node *node, TR::Co
 
             cg->evaluate(child);
 
-            deps = generateRegisterDependencyConditions(cg, child, 0);
+            deps = RegDeps(cg, child, 0);
             if (cg->getCurrentEvaluationTreeTop() == comp->getStartTree()) {
                 for (i = 0; i < child->getNumChildren(); i++) {
                     TR::ParameterSymbol *sym = child->getChild(i)->getSymbol()->getParmSymbol();
@@ -7425,7 +7417,7 @@ TR::Register *OMR::ARM64::TreeEvaluator::BBEndEvaluator(TR::Node *node, TR::Code
         if (node->getNumChildren() > 0) {
             TR::Node *child = node->getFirstChild();
             cg->evaluate(child);
-            deps = generateRegisterDependencyConditions(cg, child, 0);
+            deps = RegDeps(cg, child, 0);
             cg->decReferenceCount(child);
         }
     }
@@ -7620,7 +7612,7 @@ static TR::Register *intrinsicAtomicAdd(TR::Node *node, TR::CodeGenerator *cg)
         generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, TR::InstOpCode::ish);
 
         // Set the conditions and dependencies
-        auto conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 4, cg->trMemory());
+        auto conditions = RegDeps(0, 4, cg);
 
         conditions->addPostCondition(newValueReg, TR::RealRegister::NoReg);
         conditions->addPostCondition(oldValueReg, TR::RealRegister::NoReg);
@@ -7772,7 +7764,7 @@ TR::Register *intrinsicAtomicFetchAndAdd(TR::Node *node, TR::CodeGenerator *cg)
 
         // Set the conditions and dependencies
         const int numDeps = (valueReg != NULL) ? 5 : 4;
-        auto conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, numDeps, cg->trMemory());
+        auto conditions = RegDeps(0, numDeps, cg);
 
         conditions->addPostCondition(newValueReg, TR::RealRegister::NoReg);
         conditions->addPostCondition(oldValueReg, TR::RealRegister::NoReg);
@@ -7886,7 +7878,7 @@ TR::Register *intrinsicAtomicSwap(TR::Node *node, TR::CodeGenerator *cg)
         generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, TR::InstOpCode::ish);
 
         // Set the conditions and dependencies
-        auto conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 4, cg->trMemory());
+        auto conditions = RegDeps(0, 4, cg);
 
         conditions->addPostCondition(oldValueReg, TR::RealRegister::NoReg);
         conditions->addPostCondition(addressReg, TR::RealRegister::NoReg);

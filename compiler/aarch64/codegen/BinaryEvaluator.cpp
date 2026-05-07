@@ -716,8 +716,7 @@ TR::Register *OMR::ARM64::TreeEvaluator::vdivIntHelper(TR::Node *node, TR::Regis
             (eType == TR::Int8) ? 8 : 16);
         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subimmw, node, counterReg, counterReg, 1);
 
-        TR::RegisterDependencyConditions *cond = new (cg->trHeapMemory())
-            TR::RegisterDependencyConditions(0, 3 + srm->numAvailableRegisters(), cg->trMemory());
+        auto *cond = RegDeps(0, 3 + srm->numAvailableRegisters(), cg);
         cond->addPostCondition(lhsReg, TR::RealRegister::NoReg);
         cond->addPostCondition(rhsReg, TR::RealRegister::NoReg);
         cond->addPostCondition(resultReg, TR::RealRegister::NoReg);
@@ -1035,8 +1034,7 @@ TR::Register *OMR::ARM64::TreeEvaluator::imulhEvaluator(TR::Node *node, TR::Code
     TR::Register *tmpReg = NULL;
 
     TR::Register *zeroReg = cg->allocateRegister();
-    TR::RegisterDependencyConditions *cond
-        = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(1, 1, cg->trMemory());
+    auto *cond = RegDeps(1, 1, cg);
     TR::addDependency(cond, zeroReg, TR::RealRegister::xzr, TR_GPR, cg);
 
     // imulh is generated for constant idiv and the second child is the magic number

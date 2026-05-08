@@ -30,7 +30,13 @@
 #pragma csect(TEST, "OMRMachine#T")
 #endif
 
-#include "codegen/Machine.hpp"
-
+#include "codegen/CodeGenerator.hpp"
 #include "codegen/Machine.hpp"
 #include "codegen/Machine_inlines.hpp"
+
+TR::Machine *OMR::Machine::create(TR::CodeGenerator *cg)
+{
+    TR::Machine *m = new (cg->trHeapMemory()) TR::Machine(cg);
+    m->initialize();
+    return m;
+}

@@ -69,6 +69,8 @@ class OMR_EXTENSIBLE Machine : public OMR::X86::Machine {
 public:
     Machine(TR::CodeGenerator *cg);
 
+    void initialize();
+
     static uint8_t numGPRRegsWithheld(TR::CodeGenerator *cg);
     static uint8_t numRegsWithheld(TR::CodeGenerator *cg);
 

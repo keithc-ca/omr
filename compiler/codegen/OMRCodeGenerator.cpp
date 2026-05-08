@@ -268,7 +268,7 @@ void OMR::CodeGenerator::initialize()
     TR::CodeGenerator *cg = self();
     TR::Compilation *comp = self()->comp();
 
-    _machine = new (cg->trHeapMemory()) TR::Machine(cg);
+    _machine = TR::Machine::create(cg);
 
     _disableInternalPointers = comp->getOption(TR_MimicInterpreterFrameShape) || comp->getOptions()->realTimeGC()
         || comp->getOption(TR_DisableInternalPointers);

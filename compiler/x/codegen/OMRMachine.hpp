@@ -105,6 +105,7 @@ public:
 namespace OMR { namespace X86 {
 
 class OMR_EXTENSIBLE Machine : public OMR::Machine {
+protected:
     TR::Register **_registerAssociations;
 
     /**
@@ -122,10 +123,11 @@ class OMR_EXTENSIBLE Machine : public OMR::Machine {
 
     TR::SymbolReference *_dummyLocal[TR::NumAllTypes];
 
-protected:
     uint32_t *_globalRegisterNumberToRealRegisterMap;
 
 public:
+    void initialize();
+
     void initializeRegisterFile(const struct TR::X86LinkageProperties &);
     uint32_t *getGlobalRegisterTable(const struct TR::X86LinkageProperties &);
     int32_t getGlobalReg(TR::RealRegister::RegNum reg);
@@ -226,9 +228,7 @@ public:
 #endif
 
 protected:
-    Machine(uint8_t numIntRegs, uint8_t numFPRegs, TR::CodeGenerator *cg, TR::Register **registerAssociations,
-        uint8_t numGlobalGPRs, uint8_t numGlobal8BitGPRs, uint8_t numGlobalFPRs, TR::Register **xmmGlobalRegisters,
-        uint32_t *globalRegisterNumberToRealRegisterMap);
+    Machine(TR::CodeGenerator *cg);
 };
 }} // namespace OMR::X86
 #endif

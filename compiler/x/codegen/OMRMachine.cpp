@@ -161,22 +161,18 @@ static bool registersMayOverlap(TR::Register *reg1, TR::Register *reg2)
     return true;
 }
 
-OMR::X86::Machine::Machine(uint8_t numIntRegs, uint8_t numFPRegs, TR::CodeGenerator *cg,
-    TR::Register **registerAssociations, uint8_t numGlobalGPRs, uint8_t numGlobal8BitGPRs, uint8_t numGlobalFPRs,
-    TR::Register **xmmGlobalRegisters, uint32_t *globalRegisterNumberToRealRegisterMap)
+OMR::X86::Machine::Machine(TR::CodeGenerator *cg)
     : OMR::Machine(cg)
-    , _registerAssociations(registerAssociations)
-    , _numGlobalGPRs(numGlobalGPRs)
-    , _numGlobal8BitGPRs(numGlobal8BitGPRs)
-    , _numGlobalFPRs(numGlobalFPRs)
-    , _xmmGlobalRegisters(xmmGlobalRegisters)
-    , _globalRegisterNumberToRealRegisterMap(globalRegisterNumberToRealRegisterMap)
     , _spilledRegistersList(NULL)
-    , _numGPRs(numIntRegs)
+{}
+
+void OMR::X86::Machine::initialize()
 {
+    self()->OMR::Machine::initialize();
+
     self()->resetXMMGlobalRegisters();
 
-    for (int i = 0; i < TR::NumAllTypes; i++) {
+    for (int32_t i = 0; i < TR::NumAllTypes; i++) {
         _dummyLocal[i] = NULL;
     }
 

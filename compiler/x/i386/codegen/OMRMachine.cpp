@@ -18,3 +18,26 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
+
+#include "codegen/Machine.hpp"
+#include "codegen/Machine_inlines.hpp"
+
+OMR::X86::I386::Machine::Machine(TR::CodeGenerator *cg)
+    : OMR::X86::Machine(cg)
+{
+    // Initialize fields in Machine superclass
+    //
+    _registerAssociations = _registerAssociationsStorage;
+    _xmmGlobalRegisters = _xmmGlobalRegisterStorage;
+    _globalRegisterNumberToRealRegisterMap = _globalRegisterNumberToRealRegisterMapStorage;
+}
+
+void OMR::X86::I386::Machine::initialize()
+{
+    self()->OMR::X86::Machine::initialize();
+
+    _numGPRs = IA32_NUM_GPR;
+    _numGlobalGPRs = IA32_MAX_GLOBAL_GPRS;
+    _numGlobal8BitGPRs = IA32_MAX_8BIT_GLOBAL_GPRS;
+    _numGlobalFPRs = IA32_MAX_GLOBAL_FPRS;
+}

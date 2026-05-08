@@ -56,6 +56,20 @@ class OMR_EXTENSIBLE Machine {
 public:
     TR_ALLOC(TR_Memory::Machine)
 
+    /**
+     * @brief Factory function to create and initialize a new \c TR::Machine object.
+     *
+     * @param[in] cg \c TR::CodeGenerator object
+     *
+     * @return An allocated and initialized \c TR::Machine object
+     */
+    static TR::Machine *create(TR::CodeGenerator *cg);
+
+    /**
+     * @brief Initialize a \c TR::Machine object
+     */
+    void initialize() {}
+
     Machine(TR::CodeGenerator *cg)
         : _cg(cg)
         , numLockedGPRs(-1)

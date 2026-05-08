@@ -19,10 +19,10 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
-#include "x/amd64/codegen/OMRMachine.hpp"
-
 #include <stdint.h>
 #include "codegen/CodeGenerator.hpp"
+#include "codegen/Machine.hpp"
+#include "codegen/Machine_inlines.hpp"
 #include "compile/Compilation.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
@@ -30,13 +30,31 @@
 bool OMR::X86::AMD64::Machine::_disableNewPickRegister, OMR::X86::AMD64::Machine::_dnprIsInitialized = false;
 
 OMR::X86::AMD64::Machine::Machine(TR::CodeGenerator *cg)
-    : OMR::X86::Machine(AMD64_NUM_GPR, // TODO:AMD64: What do these actually do? Possibly
-          AMD64_NUM_FPR, // clean up TR_Machine to remove them.
-          cg, _registerAssociationsStorage,
-          TR::Machine::enableNewPickRegister() ? (AMD64_MAX_GLOBAL_GPRS - TR::Machine::numGPRRegsWithheld(cg)) : 8,
-          TR::Machine::enableNewPickRegister() ? (AMD64_MAX_8BIT_GLOBAL_GPRS - TR::Machine::numRegsWithheld(cg)) : 8,
-          TR::Machine::enableNewPickRegister() ? (AMD64_MAX_GLOBAL_FPRS - TR::Machine::numRegsWithheld(cg)) : 8,
-          _xmmGlobalRegisterStorage, _globalRegisterNumberToRealRegisterMapStorage) {};
+    : OMR::X86::Machine(cg)
+{
+    // Initialize fields in Machine superclass
+    //
+    _registerAssociations = _registerAssociationsStorage;
+    _xmmGlobalRegisters = _xmmGlobalRegisterStorage;
+    _globalRegisterNumberToRealRegisterMap = _globalRegisterNumberToRealRegisterMapStorage;
+}
+
+void OMR::X86::AMD64::Machine::initialize()
+{
+    self()->OMR::X86::Machine::initialize();
+
+    _numGPRs = AMD64_NUM_GPR;
+
+    if (TR::Machine::enableNewPickRegister()) {
+        _numGlobalGPRs = AMD64_MAX_GLOBAL_GPRS - TR::Machine::numGPRRegsWithheld(cg());
+        _numGlobal8BitGPRs = AMD64_MAX_8BIT_GLOBAL_GPRS - TR::Machine::numRegsWithheld(cg());
+        _numGlobalFPRs = AMD64_MAX_GLOBAL_FPRS - TR::Machine::numRegsWithheld(cg());
+    } else {
+        _numGlobalGPRs = 8;
+        _numGlobal8BitGPRs = 8;
+        _numGlobalFPRs = 8;
+    }
+}
 
 uint8_t OMR::X86::AMD64::Machine::numGPRRegsWithheld(TR::CodeGenerator *cg)
 {

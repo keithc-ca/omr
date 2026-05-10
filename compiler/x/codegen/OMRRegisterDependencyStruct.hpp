@@ -47,13 +47,6 @@ namespace OMR { namespace X86 {
 
 struct RegisterDependency : OMR::RegisterDependency {
     /**
-     * @return Answers \c true if this register dependency is a request for the
-     *         best free register from the perspective of the register assigner;
-     *         \c false otherwise.
-     */
-    bool isBestFreeReg() { return _realRegister == TR::RealRegister::BestFreeReg; }
-
-    /**
      * @return Answers \c true if this register dependency is a request for a
      *         register that can be used as the byte operand in certain machine
      *         instructions; \c false otherwise.

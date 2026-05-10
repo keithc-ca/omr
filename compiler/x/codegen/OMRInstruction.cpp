@@ -130,7 +130,7 @@ void OMR::X86::Instruction::assignRegisters(TR_RegisterKinds kindsToBeAssigned)
             // First traverse the existing associations and remove them
             // so that they don't interfere with the new ones
             //
-            for (int i = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastAssignableGPR; ++i) {
+            for (int32_t i = machine->getFirstGPR(); i <= machine->getLastAssignableGPR(); ++i) {
                 // Skip non-assignable registers
                 //
                 if (machine->getRealRegister((TR::RealRegister::RegNum)i)->getState() == TR::RealRegister::Locked)
@@ -159,7 +159,7 @@ void OMR::X86::Instruction::assignRegisters(TR_RegisterKinds kindsToBeAssigned)
             TR::Machine *machine = cg()->machine();
 
             // Clear existing XMM associations
-            for (int i = TR::RealRegister::FirstXMMR; i <= TR::RealRegister::LastXMMR; ++i) {
+            for (int32_t i = machine->getFirstXMMR(); i <= machine->getLastXMMR(); ++i) {
                 if (machine->getRealRegister((TR::RealRegister::RegNum)i)->getState() == TR::RealRegister::Locked)
                     continue;
                 TR::Register *virtReg = machine->getVirtualAssociatedWithReal((TR::RealRegister::RegNum)i);

@@ -108,15 +108,22 @@ class OMR_EXTENSIBLE Machine : public OMR::Machine {
 protected:
     TR::Register **_registerAssociations;
 
-    /**
-     * Number of general purpose registers
-     */
-    int8_t _numGPRs;
+    TR::RealRegister::RegNum _firstGPR;
+    TR::RealRegister::RegNum _lastGPR;
+    TR::RealRegister::RegNum _lastAssignableGPR;
+    TR::RealRegister::RegNum _last8BitGPR;
+    uint8_t _numAssignableGPRs;
 
-    // Floating point stack pseudo-registers: they can be mapped to real
-    // registers on demand, based on their relative position from the top of
-    // stack marker.
-    //
+    TR::RealRegister::RegNum _firstXMMR;
+    TR::RealRegister::RegNum _lastXMMR;
+    TR::RealRegister::RegNum _lastAssignableXMMR;
+    uint8_t _numAssignableXMMRs;
+
+    TR::RealRegister::RegNum _firstVMR;
+    TR::RealRegister::RegNum _lastVMR;
+    TR::RealRegister::RegNum _lastAssignableVMR;
+    uint8_t _numAssignableVMRs;
+
     TR::Register **_xmmGlobalRegisters;
 
     List<TR::Register> *_spilledRegistersList;
@@ -132,7 +139,96 @@ public:
     uint32_t *getGlobalRegisterTable(const struct TR::X86LinkageProperties &);
     int32_t getGlobalReg(TR::RealRegister::RegNum reg);
 
-    uint8_t getNumberOfGPRs() { return _numGPRs; }
+    /**
+     * @brief Getter/Setter for _firstGPR
+     */
+    OMR_FINAL TR::RealRegister::RegNum getFirstGPR() { return _firstGPR; }
+
+    OMR_FINAL void setFirstGPR(TR::RealRegister::RegNum r) { _firstGPR = r; }
+
+    /**
+     * @brief Getter/Setter for _lastGPR
+     */
+    OMR_FINAL TR::RealRegister::RegNum getLastGPR() { return _lastGPR; }
+
+    OMR_FINAL void setLastGPR(TR::RealRegister::RegNum r) { _lastGPR = r; }
+
+    /**
+     * @brief Getter/Setter for _lastAssignableGPR
+     */
+    OMR_FINAL TR::RealRegister::RegNum getLastAssignableGPR() { return _lastAssignableGPR; }
+
+    OMR_FINAL void setLastAssignableGPR(TR::RealRegister::RegNum r) { _lastAssignableGPR = r; }
+
+    /**
+     * @brief Getter/Setter for _last8BitGPR
+     */
+    OMR_FINAL TR::RealRegister::RegNum getLast8BitGPR() { return _last8BitGPR; }
+
+    OMR_FINAL void setLast8BitGPR(TR::RealRegister::RegNum r) { _last8BitGPR = r; }
+
+    /**
+     * @brief Getter/Setter for _numAssignableGPRs
+     */
+    OMR_FINAL uint8_t getNumAssignableGPRs() { return _numAssignableGPRs; }
+
+    OMR_FINAL void setNumAssignableGPRs(uint8_t n) { _numAssignableGPRs = n; }
+
+    /**
+     * @brief Getter/Setter for _firstXMMR
+     */
+    OMR_FINAL TR::RealRegister::RegNum getFirstXMMR() { return _firstXMMR; }
+
+    OMR_FINAL void setFirstXMMR(TR::RealRegister::RegNum r) { _firstXMMR = r; }
+
+    /**
+     * @brief Getter/Setter for _lastXMMR
+     */
+    OMR_FINAL TR::RealRegister::RegNum getLastXMMR() { return _lastXMMR; }
+
+    OMR_FINAL void setLastXMMR(TR::RealRegister::RegNum r) { _lastXMMR = r; }
+
+    /**
+     * @brief Getter/Setter for _lastAssignableXMMR
+     */
+    OMR_FINAL TR::RealRegister::RegNum getLastAssignableXMMR() { return _lastAssignableXMMR; }
+
+    OMR_FINAL void setLastAssignableXMMR(TR::RealRegister::RegNum r) { _lastAssignableXMMR = r; }
+
+    /**
+     * @brief Getter/Setter for _numAssignableXMMRs
+     */
+    OMR_FINAL uint8_t getNumAssignableXMMRs() { return _numAssignableXMMRs; }
+
+    OMR_FINAL void setNumAssignableXMMRs(uint8_t n) { _numAssignableXMMRs = n; }
+
+    /**
+     * @brief Getter/Setter for _firstVMR
+     */
+    OMR_FINAL TR::RealRegister::RegNum getFirstVMR() { return _firstVMR; }
+
+    OMR_FINAL void setFirstVMR(TR::RealRegister::RegNum r) { _firstVMR = r; }
+
+    /**
+     * @brief Getter/Setter for _lastVMR
+     */
+    OMR_FINAL TR::RealRegister::RegNum getLastVMR() { return _lastVMR; }
+
+    OMR_FINAL void setLastVMR(TR::RealRegister::RegNum r) { _lastVMR = r; }
+
+    /**
+     * @brief Getter/Setter for _lastAssignableVMR
+     */
+    OMR_FINAL TR::RealRegister::RegNum getLastAssignableVMR() { return _lastAssignableVMR; }
+
+    OMR_FINAL void setLastAssignableVMR(TR::RealRegister::RegNum r) { _lastAssignableVMR = r; }
+
+    /**
+     * @brief Getter/Setter for _numAssignableVMRs
+     */
+    OMR_FINAL uint8_t getNumAssignableVMRs() { return _numAssignableVMRs; }
+
+    OMR_FINAL void setNumAssignableVMRs(uint8_t n) { _numAssignableVMRs = n; }
 
     TR::RealRegister **captureRegisterFile();
     void installRegisterFile(TR::RealRegister **registerFileCopy);

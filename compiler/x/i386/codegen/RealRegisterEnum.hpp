@@ -24,13 +24,20 @@
  * definitions are permitted.
  */
 
+// Pseudo register indicating any register
+//
 NoReg = 0,
 
-    // The order of the GPRS registers is defined by the linkage
-    // convention, and the VM may rely on it (eg. for GC).
+    // Some consumers of OMR may rely on this register ordering (e.g., for
+    // register masks for live references for garbage collection), so be
+    // mindful of altering it.
+    //
     eax = 1, FirstGPR = eax, ebx = 2, ecx = 3, edx = 4, Last8BitGPR = edx, edi = 5, esi = 6, ebp = 7,
     LastAssignableGPR = ebp, esp = 8, LastGPR = esp,
 
+    // Virtual frame pointer used as a placeholder for frame references before
+    // their offsets are known for rsp mapping
+    //
     vfp = 9,
 
     // st0Return is used for 32-bit linkages where floating point values are
@@ -42,17 +49,24 @@ NoReg = 0,
     xmm0 = 11, FirstXMMR = xmm0, xmm1 = 12, xmm2 = 13, xmm3 = 14, xmm4 = 15, xmm5 = 16, xmm6 = 17, xmm7 = 18,
     LastXMMR = xmm7,
 
-    ymm0 = xmm0, FirstYMMR = ymm0, ymm1 = xmm1, ymm2 = xmm2, ymm3 = xmm3, ymm4 = xmm4, ymm5 = xmm5, ymm6 = xmm6,
-    ymm7 = xmm7, LastYMMR = ymm7,
+    // Alias ymm registers with xmm registers as they architecturally overlap
+    //
+    ymm0 = xmm0, ymm1 = xmm1, ymm2 = xmm2, ymm3 = xmm3, ymm4 = xmm4, ymm5 = xmm5, ymm6 = xmm6, ymm7 = xmm7,
 
-    zmm0 = xmm0, FirstZMMR = zmm0, zmm1 = xmm1, zmm2 = xmm2, zmm3 = xmm3, zmm4 = xmm4, zmm5 = xmm5, zmm6 = xmm6,
-    zmm7 = xmm7, LastZMMR = zmm7,
+    // Alias zmm registers with xmm registers as they architecturally overlap
+    //
+    zmm0 = xmm0, zmm1 = xmm1, zmm2 = xmm2, zmm3 = xmm3, zmm4 = xmm4, zmm5 = xmm5, zmm6 = xmm6, zmm7 = xmm7,
 
-    // avx512 write mask registers
-    // k0 -> reserved for unmasked operations
+    // AVX-512 write mask registers
+    //
     k0 = 19, k1 = 20, k2 = 21, k3 = 22, k4 = 23, k5 = 24, k6 = 25, k7 = 26,
 
-    ByteReg = 27, BestFreeReg = 28, SpilledReg = 29, NumRegisters = 30,
+    // Pseudo register indicating any byte register
+    //
+    ByteReg = 27,
 
-    NumXMMRegisters = LastXMMR - FirstXMMR + 1,
-    MaxAssignableRegisters = NumXMMRegisters + (LastAssignableGPR - FirstGPR + 1) - 1 // -1 for stack pointer
+    // Pseudo register indicating a register in spill state
+    //
+    SpilledReg = 28,
+
+    NumRegisters = 29,

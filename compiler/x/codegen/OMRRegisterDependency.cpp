@@ -306,7 +306,7 @@ uint32_t OMR::X86::RegisterDependencyConditions::unionDependencies(TR::RegisterD
                     deps->setDependencyInfo(candidate, vr, max, cg, flag, isAssocRegDependency);
                 } else if (max == TR::RealRegister::ByteReg) {
                     // Specific regs are stronger than ByteReg
-                    TR_ASSERT(min <= TR::RealRegister::Last8BitGPR,
+                    TR_ASSERT(min <= machine->getLast8BitGPR(),
                         "Only byte registers are compatible with ByteReg dependency");
                     deps->setDependencyInfo(candidate, vr, min, cg, flag, isAssocRegDependency);
                 } else {
@@ -595,8 +595,6 @@ void OMR::X86::RegisterDependencyGroup::assignRegisters(TR::Instruction *current
     TR::RealRegister *assignedReg = NULL;
     TR::RealRegister::RegNum dependentRegNum = TR::RealRegister::NoReg;
     TR::RealRegister *dependentRealReg = NULL;
-    TR::RealRegister *bestFreeRealReg = NULL;
-    TR::RealRegister::RegNum bestFreeRealRegIndex = TR::RealRegister::NoReg;
     bool changed;
 
     TR::Compilation *comp = cg->comp();
@@ -614,26 +612,22 @@ void OMR::X86::RegisterDependencyGroup::assignRegisters(TR::Instruction *current
 
     bool hasByteDeps = false;
     bool hasNoRegDeps = false;
-    bool hasBestFreeRegDeps = false;
     int32_t numRealAssocRegisters;
     int32_t numDependencyRegisters = 0;
     int32_t firstByteRegAssoc = 0, lastByteRegAssoc = 0;
     int32_t firstNoRegAssoc = 0, lastNoRegAssoc = 0;
-    int32_t bestFreeRegAssoc = 0;
 
     for (auto i = 0U; i < numberOfRegisters; i++) {
         TR::RegisterDependency &regDep = _dependencies[i];
         virtReg = regDep.getRegister();
 
         if (virtReg && (kindsToBeAssigned & virtReg->getKindAsMask()) && !regDep.isNoReg() && !regDep.isByteReg()
-            && !regDep.isSpilledReg() && !regDep.isBestFreeReg()) {
+            && !regDep.isSpilledReg()) {
             dependencies[numDependencyRegisters++] = self()->getRegisterDependency(i);
         } else if (regDep.isNoReg())
             hasNoRegDeps = true;
         else if (regDep.isByteReg())
             hasByteDeps = true;
-        else if (regDep.isBestFreeReg())
-            hasBestFreeRegDeps = true;
 
         // Handle spill registers first.
         //
@@ -707,19 +701,6 @@ void OMR::X86::RegisterDependencyGroup::assignRegisters(TR::Instruction *current
         }
 
         lastNoRegAssoc = numDependencyRegisters - 1;
-    }
-
-    if (hasBestFreeRegDeps) {
-        bestFreeRegAssoc = numDependencyRegisters;
-        for (auto i = 0U; i < numberOfRegisters; i++) {
-            virtReg = _dependencies[i].getRegister();
-            if (virtReg && (kindsToBeAssigned & virtReg->getKindAsMask()) && _dependencies[i].isBestFreeReg()) {
-                dependencies[numDependencyRegisters++] = self()->getRegisterDependency(i);
-            }
-        }
-
-        TR_ASSERT((bestFreeRegAssoc == numDependencyRegisters - 1),
-            "there can only be one bestFreeRegDep in a dependency list");
     }
 
     // First look for long shot where two registers can be xchg'ed into their
@@ -861,14 +842,6 @@ void OMR::X86::RegisterDependencyGroup::assignRegisters(TR::Instruction *current
         } while (changed);
     }
 
-    // Recommend the best available register without actually assigning it.
-    //
-    if (hasBestFreeRegDeps) {
-        virtReg = dependencies[bestFreeRegAssoc]->getRegister();
-        bestFreeRealReg = machine->findBestFreeGPRegister(currentInstruction, virtReg);
-        bestFreeRealRegIndex = bestFreeRealReg ? bestFreeRealReg->getRegisterNumber() : TR::RealRegister::NoReg;
-    }
-
     self()->unblockRegisters(numberOfRegisters);
 
     for (auto i = 0; i < numDependencyRegisters; i++) {
@@ -881,12 +854,6 @@ void OMR::X86::RegisterDependencyGroup::assignRegisters(TR::Instruction *current
         //
         if (dependencies[i]->isNoReg())
             dependencies[i]->setRealRegister(assignedReg->getRegisterNumber());
-
-        if (dependencies[i]->isBestFreeReg()) {
-            dependencies[i]->setRealRegister(bestFreeRealRegIndex);
-            virtRegister->decFutureUseCount();
-            continue;
-        }
 
         if (virtRegister->decFutureUseCount() == 0 && assignedReg->getState() != TR::RealRegister::Locked) {
             virtRegister->setAssignedRegister(NULL);

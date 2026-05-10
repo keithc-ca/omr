@@ -37,24 +37,46 @@ OMR::X86::AMD64::Machine::Machine(TR::CodeGenerator *cg)
     _registerAssociations = _registerAssociationsStorage;
     _xmmGlobalRegisters = _xmmGlobalRegisterStorage;
     _globalRegisterNumberToRealRegisterMap = _globalRegisterNumberToRealRegisterMapStorage;
-}
 
-void OMR::X86::AMD64::Machine::initialize()
-{
-    self()->OMR::X86::Machine::initialize();
+    // Initialize register limits
+    //
+    _firstGPR = TR::RealRegister::eax;
+    _lastGPR = TR::RealRegister::r15;
+    _lastAssignableGPR = TR::RealRegister::r15;
+    _last8BitGPR = TR::RealRegister::r15;
+    _numAssignableGPRs = AMD64_NUM_GPR;
 
-    _numGPRs = AMD64_NUM_GPR;
+    _firstXMMR = TR::RealRegister::xmm0;
+
+    static const char *enableAVX512ExtendedRegisters = feGetEnv("TR_EnableAVX512ExtendedRegisters");
+    if (enableAVX512ExtendedRegisters && cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_X86_AVX512F)) {
+        // AVX-512 extended registers have not been created yet.  Use xmm15 until then.
+        //
+        _lastXMMR = TR::RealRegister::xmm15;
+        _lastAssignableXMMR = TR::RealRegister::xmm15;
+    } else {
+        _lastXMMR = TR::RealRegister::xmm15;
+        _lastAssignableXMMR = TR::RealRegister::xmm15;
+    }
+    _numAssignableXMMRs = static_cast<uint8_t>(_lastAssignableXMMR - _firstXMMR);
+
+    _firstVMR = TR::RealRegister::k0;
+    _lastVMR = TR::RealRegister::k7;
+    _lastAssignableVMR = TR::RealRegister::k7;
+    _numAssignableVMRs = static_cast<uint8_t>(_lastAssignableVMR - _firstVMR);
 
     if (TR::Machine::enableNewPickRegister()) {
-        _numGlobalGPRs = AMD64_MAX_GLOBAL_GPRS - TR::Machine::numGPRRegsWithheld(cg());
-        _numGlobal8BitGPRs = AMD64_MAX_8BIT_GLOBAL_GPRS - TR::Machine::numRegsWithheld(cg());
-        _numGlobalFPRs = AMD64_MAX_GLOBAL_FPRS - TR::Machine::numRegsWithheld(cg());
+        _numGlobalGPRs = AMD64_MAX_GLOBAL_GPRS - TR::Machine::numGPRRegsWithheld(cg);
+        _numGlobal8BitGPRs = AMD64_MAX_8BIT_GLOBAL_GPRS - TR::Machine::numRegsWithheld(cg);
+        _numGlobalFPRs = AMD64_MAX_GLOBAL_FPRS - TR::Machine::numRegsWithheld(cg);
     } else {
         _numGlobalGPRs = 8;
         _numGlobal8BitGPRs = 8;
         _numGlobalFPRs = 8;
     }
 }
+
+void OMR::X86::AMD64::Machine::initialize() { self()->OMR::X86::Machine::initialize(); }
 
 uint8_t OMR::X86::AMD64::Machine::numGPRRegsWithheld(TR::CodeGenerator *cg)
 {

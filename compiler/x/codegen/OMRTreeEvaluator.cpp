@@ -397,7 +397,7 @@ TR::Instruction *OMR::X86::TreeEvaluator::insertLoadMemory(TR::Node *node, TR::R
     //
     if (type == TR_RematerializableByte && target->getAssignedRealRegister()) {
         TR::RealRegister::RegNum r = toRealRegister(target->getAssignedRealRegister())->getRegisterNumber();
-        if (r > TR::RealRegister::Last8BitGPR)
+        if (r > cg->machine()->getLast8BitGPR())
             opCode = OP::MOVZXReg4Mem1;
     }
 
@@ -778,7 +778,7 @@ TR::Register *OMR::X86::TreeEvaluator::integerStoreEvaluator(TR::Node *node, TR:
                 valueChild->setDirectMemoryUpdate(true);
             } else {
                 int32_t numRegs = cg->getLiveRegisters(TR_GPR)->getNumberOfLiveRegisters();
-                if (numRegs >= TR::RealRegister::LastAssignableGPR - 2) // -1 for VM thread reg, -1 fudge
+                if (numRegs >= cg->machine()->getLastAssignableGPR() - 2) // -1 for VM thread reg, -1 fudge
                     valueChild->setDirectMemoryUpdate(true);
             }
         }

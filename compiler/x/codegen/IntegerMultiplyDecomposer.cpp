@@ -165,7 +165,7 @@ int32_t TR_X86IntegerMultiplyDecomposer::findDecomposition(int64_t multiplier)
             correctionIfTakeAdvantageOfClobberableSource = 1;
         }
         int32_t numLiveRegs = _cg->getLiveRegisters(TR_GPR)->getNumberOfLiveRegisters();
-        int32_t numGPRRegs = _cg->machine()->getNumberOfGPRs();
+        int32_t numGPRRegs = _cg->machine()->getNumAssignableGPRs();
         int32_t registerCostOfDecomposition
             = composition._numAdditionalRegistersNeeded - correctionIfTakeAdvantageOfClobberableSource;
         if (registerCostOfDecomposition <= 1 || // mul would have a default register cost, too

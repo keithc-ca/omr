@@ -176,7 +176,7 @@ function(_omr_toolchain_separate_debug_symbols tgt)
 			add_custom_command(
 				TARGET "${tgt}"
 				POST_BUILD
-				COMMAND "${CMAKE_OBJCOPY}" --only-keep-debug "${exe_file}" "${dbg_file}"
+				COMMAND "${CMAKE_OBJCOPY}" ${OMR_OBJCOPY_COMPRESS_FLAGS} --only-keep-debug "${exe_file}" "${dbg_file}"
 			)
 			if (NOT ${skip_strip})
 				add_custom_command(

@@ -2302,7 +2302,7 @@
         /* .name        = */ "fres",
         /* .description =    "Floating reciprocal estimate single", */
         /* .prefix      = */ 0x00000000,
-        /* .opcode      = */ 0xFC000030,
+        /* .opcode      = */ 0xEC000030,
         /* .format      = */ FORMAT_UNKNOWN,
         /* .minimumALS  = */ OMR_PROCESSOR_PPC_PWR630,
         /* .properties  = */ PPCOpProp_DoubleFP | PPCOpProp_SyncSideEffectFree,

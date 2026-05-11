@@ -35,17 +35,18 @@ typedef enum {
 } ARM64ShiftCode;
 
 /*
- * Extend codes used in "extended register" instructions
+ * Extend codes used in "extended register" instructions and memory references
  */
 typedef enum {
     EXT_UXTB = 0,
     EXT_UXTH,
     EXT_UXTW,
     EXT_UXTX,
+    EXT_LSL = EXT_UXTX, // alias
     EXT_SXTB,
     EXT_SXTH,
     EXT_SXTW,
-    EXT_SXTX,
+    EXT_SXTX
 } ARM64ExtendCode;
 
 /*

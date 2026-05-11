@@ -1091,11 +1091,9 @@ uint8_t *OMR::ARM64::MemoryReference::generateBinaryEncoding(TR::Instruction *cu
                     index->setRegisterFieldRM(wcursor);
 
                     if (self()->isIndexSignExtendedWord()) {
-                        // SXTW
-                        *wcursor |= 0x6 << 13;
+                        *wcursor |= TR::EXT_SXTW << 13;
                     } else {
-                        // LSL
-                        *wcursor |= 0x3 << 13;
+                        *wcursor |= TR::EXT_LSL << 13;
                     }
                     uint8_t scale = self()->getScale();
                     if (scale != 0) {

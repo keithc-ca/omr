@@ -40,9 +40,9 @@ TR::MemoryReference *TR::MemoryReference::create(TR::CodeGenerator *cg)
 }
 
 TR::MemoryReference *TR::MemoryReference::createWithIndexReg(TR::CodeGenerator *cg, TR::Register *baseReg,
-    TR::Register *indexReg, uint8_t scale, TR::ARM64ExtendCode extendCode)
+    TR::Register *indexReg, uint8_t scale)
 {
-    return new (cg->trHeapMemory()) TR::MemoryReference(baseReg, indexReg, cg);
+    return new (cg->trHeapMemory()) TR::MemoryReference(baseReg, indexReg, scale, cg);
 }
 
 TR::MemoryReference *TR::MemoryReference::createWithDisplacement(TR::CodeGenerator *cg, TR::Register *baseReg,
@@ -137,6 +137,21 @@ OMR::ARM64::MemoryReference::MemoryReference(TR::Register *br, TR::Register *ir,
     , _unresolvedSnippet(NULL)
     , _flag(0)
     , _scale(0)
+    , _length(0)
+{
+    _symbolReference = new (cg->trHeapMemory()) TR::SymbolReference(cg->comp()->getSymRefTab());
+    _offset = _symbolReference->getOffset();
+}
+
+OMR::ARM64::MemoryReference::MemoryReference(TR::Register *br, TR::Register *ir, uint8_t scale, TR::CodeGenerator *cg)
+    : _baseRegister(br)
+    , _baseNode(NULL)
+    , _indexRegister(ir)
+    , _indexNode(NULL)
+    , _extraRegister(NULL)
+    , _unresolvedSnippet(NULL)
+    , _flag(0)
+    , _scale(scale)
     , _length(0)
 {
     _symbolReference = new (cg->trHeapMemory()) TR::SymbolReference(cg->comp()->getSymRefTab());

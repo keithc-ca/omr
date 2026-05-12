@@ -526,7 +526,6 @@ void TR::ARM64SystemLinkage::createEpilogue(TR::Instruction *cursor)
 }
 
 int32_t TR::ARM64SystemLinkage::buildArgs(TR::Node *callNode, TR::RegisterDependencyConditions *dependencies)
-
 {
     const TR::ARM64LinkageProperties &properties = getProperties();
     TR::ARM64MemoryArgument *pushToMemory = NULL;
@@ -799,8 +798,8 @@ TR::Register *TR::ARM64SystemLinkage::buildDirectDispatch(TR::Node *callNode)
 
     // Extra post dependency for killing vector registers (see KillVectorRegs)
     const int extraPostReg = killsVectorRegisters() ? 1 : 0;
-    TR::RegisterDependencyConditions *dependencies = new (trHeapMemory()) TR::RegisterDependencyConditions(
-        pp.getNumberOfDependencyGPRegisters(), pp.getNumberOfDependencyGPRegisters() + extraPostReg, trMemory());
+    TR::RegisterDependencyConditions *dependencies
+        = RegDeps(pp.getNumberOfDependencyGPRegisters(), pp.getNumberOfDependencyGPRegisters() + extraPostReg, cg());
 
     int32_t totalSize = buildArgs(callNode, dependencies);
     if (totalSize > 0) {

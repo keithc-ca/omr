@@ -41,8 +41,7 @@ TR::Register *genericReturnEvaluator(TR::Node *node, TR::RealRegister::RegNum rn
     TR::Node *firstChild = node->getFirstChild();
     TR::Register *returnRegister = cg->evaluate(firstChild);
 
-    TR::RegisterDependencyConditions *deps
-        = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(1, 0, cg->trMemory());
+    auto *deps = RegDeps(1, 0, cg);
     deps->addPreCondition(returnRegister, rnum);
     generateAdminInstruction(cg, TR::InstOpCode::retn, node, deps);
 
@@ -81,8 +80,7 @@ TR::Register *OMR::ARM64::TreeEvaluator::gotoEvaluator(TR::Node *node, TR::CodeG
     if (node->getNumChildren() > 0) {
         TR::Node *child = node->getFirstChild();
         cg->evaluate(child);
-        generateLabelInstruction(cg, TR::InstOpCode::b, node, gotoLabel,
-            generateRegisterDependencyConditions(cg, child, 0));
+        generateLabelInstruction(cg, TR::InstOpCode::b, node, gotoLabel, RegDeps(cg, child, 0));
         cg->decReferenceCount(child);
     } else {
         generateLabelInstruction(cg, TR::InstOpCode::b, node, gotoLabel);
@@ -205,7 +203,7 @@ static TR::Instruction *ificmpHelper(TR::Node *node, TR::ARM64ConditionCode cc, 
                     "The third child of a compare must be a TR::GlRegDeps");
                 cg->evaluate(thirdChild);
 
-                deps = generateRegisterDependencyConditions(cg, thirdChild, 1);
+                deps = RegDeps(cg, thirdChild, 1);
                 uint32_t numPreConditions = deps->getAddCursorForPre();
                 if (!deps->getPreConditions()->containsVirtualRegister(src1Reg, numPreConditions)) {
                     TR::addDependency(deps, src1Reg, TR::RealRegister::NoReg, TR_GPR, cg);
@@ -248,7 +246,7 @@ static TR::Instruction *ificmpHelper(TR::Node *node, TR::ARM64ConditionCode cc, 
 
         cg->evaluate(thirdChild);
 
-        deps = generateRegisterDependencyConditions(cg, thirdChild, 0);
+        deps = RegDeps(cg, thirdChild, 0);
         result = generateConditionalBranchInstruction(cg, node, dstLabel, cc, deps);
     } else {
         result = generateConditionalBranchInstruction(cg, node, dstLabel, cc);
@@ -570,11 +568,11 @@ TR::Register *OMR::ARM64::TreeEvaluator::lookupEvaluator(TR::Node *node, TR::Cod
 
     if (!constantIsUnsignedImm12(node->getChild(2)->getCaseConstant())
         || !constantIsUnsignedImm12(node->getChild(numChildren - 1)->getCaseConstant())) {
-        conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(2, 2, cg->trMemory());
+        conditions = RegDeps(2, 2, cg);
         tmpRegister = cg->allocateRegister();
         TR::addDependency(conditions, tmpRegister, TR::RealRegister::NoReg, TR_GPR, cg);
     } else {
-        conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(1, 1, cg->trMemory());
+        conditions = RegDeps(1, 1, cg);
     }
     TR::addDependency(conditions, selectorReg, TR::RealRegister::NoReg, TR_GPR, cg);
 
@@ -593,7 +591,7 @@ TR::Register *OMR::ARM64::TreeEvaluator::lookupEvaluator(TR::Node *node, TR::Cod
         if (child->getNumChildren() > 0) {
             // GRA
             cg->evaluate(child->getFirstChild());
-            cond = cond->clone(cg, generateRegisterDependencyConditions(cg, child->getFirstChild(), 0));
+            cond = cond->clone(cg, RegDeps(cg, child->getFirstChild(), 0));
         }
         generateConditionalBranchInstruction(cg, node, child->getBranchDestination()->getNode()->getLabel(), TR::CC_EQ,
             cond);
@@ -603,7 +601,7 @@ TR::Register *OMR::ARM64::TreeEvaluator::lookupEvaluator(TR::Node *node, TR::Cod
     if (defaultChild->getNumChildren() > 0) {
         // GRA
         cg->evaluate(defaultChild->getFirstChild());
-        conditions = conditions->clone(cg, generateRegisterDependencyConditions(cg, defaultChild->getFirstChild(), 0));
+        conditions = conditions->clone(cg, RegDeps(cg, defaultChild->getFirstChild(), 0));
     }
     generateLabelInstruction(cg, TR::InstOpCode::b, node, defaultChild->getBranchDestination()->getNode()->getLabel(),
         conditions);
@@ -626,18 +624,18 @@ TR::Register *OMR::ARM64::TreeEvaluator::tableEvaluator(TR::Node *node, TR::Code
     int32_t i;
 
     if (5 <= numBranchTableEntries) {
-        conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(2, 2, cg->trMemory());
+        conditions = RegDeps(2, 2, cg);
         tmpRegister = cg->allocateRegister();
         TR::addDependency(conditions, tmpRegister, TR::RealRegister::NoReg, TR_GPR, cg);
     } else {
-        conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(1, 1, cg->trMemory());
+        conditions = RegDeps(1, 1, cg);
     }
 
     TR::addDependency(conditions, selectorReg, TR::RealRegister::NoReg, TR_GPR, cg);
 
     if (0 < defaultChild->getNumChildren()) {
         cg->evaluate(defaultChild->getFirstChild());
-        conditions = conditions->clone(cg, generateRegisterDependencyConditions(cg, defaultChild->getFirstChild(), 0));
+        conditions = conditions->clone(cg, RegDeps(cg, defaultChild->getFirstChild(), 0));
     }
 
     if (5 > numBranchTableEntries) {
@@ -911,9 +909,9 @@ static bool virtualGuardHelper(TR::Node *node, TR::CodeGenerator *cg)
     if (node->getNumChildren() == 3) {
         TR::Node *third = node->getChild(2);
         cg->evaluate(third);
-        deps = generateRegisterDependencyConditions(cg, third, 0);
+        deps = RegDeps(cg, third, 0);
     } else
-        deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 0, cg->trMemory());
+        deps = RegDeps(0, 0, cg);
 
     if (virtualGuard->shouldGenerateChildrenCode())
         cg->evaluateChildrenWithMultipleRefCount(node);
@@ -939,7 +937,7 @@ TR::Register *OMR::ARM64::TreeEvaluator::igotoEvaluator(TR::Node *node, TR::Code
             "igoto has maximum of two children and second one must be global register dependency");
         TR::Node *glregdep = node->getChild(1);
         cg->evaluate(glregdep);
-        deps = generateRegisterDependencyConditions(cg, glregdep, 0);
+        deps = RegDeps(cg, glregdep, 0);
         cg->decReferenceCount(glregdep);
     }
     if (deps)

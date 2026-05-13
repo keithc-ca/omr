@@ -84,7 +84,7 @@ TR::RealRegister *assign8BitGPRegister(TR::Instruction *instr, TR::Register *vir
     cg->clearRegisterAssignmentFlags();
     cg->setRegisterAssignmentFlag(TR_NormalAssignment);
 
-    if (candidate->getRegisterNumber() > TR::RealRegister::Last8BitGPR) {
+    if (candidate->getRegisterNumber() > machine->getLast8BitGPR()) {
         if ((candidate = machine->findBestFreeGPRegister(instr, virtReg, TR_ByteReg)) == NULL) {
             cg->setRegisterAssignmentFlag(TR_RegisterSpilled);
             candidate = machine->freeBestGPRegister(instr, virtReg, TR_ByteReg);

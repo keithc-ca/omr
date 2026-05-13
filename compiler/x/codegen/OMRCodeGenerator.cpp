@@ -542,12 +542,13 @@ void OMR::X86::CodeGenerator::initializeX86(TR::Compilation *comp)
         self()->setGenerateMasmListingSyntax();
 
     if (comp->getOption(TR_TraceRA)) {
+        TR::Machine *machine = self()->machine();
         self()->setGPRegisterIterator(new (self()->trHeapMemory())
-                TR::RegisterIterator(machine(), TR::RealRegister::FirstGPR, TR::RealRegister::LastAssignableGPR));
+                TR::RegisterIterator(machine, machine->getFirstGPR(), machine->getLastAssignableGPR()));
         self()->setFPRegisterIterator(new (self()->trHeapMemory())
-                TR::RegisterIterator(machine(), TR::RealRegister::FirstXMMR, TR::RealRegister::LastXMMR));
+                TR::RegisterIterator(machine, machine->getFirstXMMR(), machine->getLastXMMR()));
         self()->setVMRegisterIterator(
-            new (self()->trHeapMemory()) TR::RegisterIterator(machine(), TR::RealRegister::k1, TR::RealRegister::k7));
+            new (self()->trHeapMemory()) TR::RegisterIterator(machine, TR::RealRegister::k1, TR::RealRegister::k7));
     }
 
     self()->setSupportsProfiledInlining();
@@ -691,12 +692,14 @@ TR_X86ProcessorInfo &OMR::X86::CodeGenerator::getX86ProcessorInfo()
 
 int32_t OMR::X86::CodeGenerator::getMaximumNumbersOfAssignableGPRs()
 {
-    return TR::RealRegister::LastAssignableGPR - TR::RealRegister::FirstGPR + 1; // TODO:AMD64: This is including rsp
+    TR::Machine *machine = self()->machine();
+    return machine->getLastAssignableGPR() - machine->getFirstGPR() + 1; // TODO:AMD64: This is including rsp
 }
 
 int32_t OMR::X86::CodeGenerator::getMaximumNumbersOfAssignableFPRs()
 {
-    return TR::RealRegister::LastXMMR - TR::RealRegister::FirstXMMR + 1;
+    TR::Machine *machine = self()->machine();
+    return machine->getLastXMMR() - machine->getFirstXMMR() + 1;
 }
 
 // X has a different concept of VR's compared to p/z but since LocalOpts needs this to be hoisted within CG,
@@ -1307,7 +1310,7 @@ void OMR::X86::CodeGenerator::saveBetterSpillPlacements(TR::Instruction *branchI
     int32_t i;
     TR::RealRegister *realReg;
 
-    for (i = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastAssignableGPR; i++) {
+    for (i = machine()->getFirstGPR(); i <= machine()->getLastAssignableGPR(); i++) {
         realReg = machine()->getRealRegister((TR::RealRegister::RegNum)i);
 
         // Skip non-assignable registers
@@ -2420,7 +2423,7 @@ void OMR::X86::CodeGenerator::buildRegisterMapForInstruction(TR_GCStackMap *map)
     //
     // Build the register map
     //
-    for (int i = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastAssignableGPR; ++i) {
+    for (int32_t i = machine()->getFirstGPR(); i <= machine()->getLastAssignableGPR(); ++i) {
         TR::RealRegister *reg = machine()->getRealRegister((TR::RealRegister::RegNum)i);
         if (reg->getHasBeenAssignedInMethod()) {
             TR::Register *virtReg = reg->getAssignedRegister();

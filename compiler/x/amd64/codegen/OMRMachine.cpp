@@ -19,10 +19,10 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
-#include "x/amd64/codegen/OMRMachine.hpp"
-
 #include <stdint.h>
 #include "codegen/CodeGenerator.hpp"
+#include "codegen/Machine.hpp"
+#include "codegen/Machine_inlines.hpp"
 #include "compile/Compilation.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
@@ -30,13 +30,53 @@
 bool OMR::X86::AMD64::Machine::_disableNewPickRegister, OMR::X86::AMD64::Machine::_dnprIsInitialized = false;
 
 OMR::X86::AMD64::Machine::Machine(TR::CodeGenerator *cg)
-    : OMR::X86::Machine(AMD64_NUM_GPR, // TODO:AMD64: What do these actually do? Possibly
-          AMD64_NUM_FPR, // clean up TR_Machine to remove them.
-          cg, _registerAssociationsStorage,
-          TR::Machine::enableNewPickRegister() ? (AMD64_MAX_GLOBAL_GPRS - TR::Machine::numGPRRegsWithheld(cg)) : 8,
-          TR::Machine::enableNewPickRegister() ? (AMD64_MAX_8BIT_GLOBAL_GPRS - TR::Machine::numRegsWithheld(cg)) : 8,
-          TR::Machine::enableNewPickRegister() ? (AMD64_MAX_GLOBAL_FPRS - TR::Machine::numRegsWithheld(cg)) : 8,
-          _xmmGlobalRegisterStorage, _globalRegisterNumberToRealRegisterMapStorage) {};
+    : OMR::X86::Machine(cg)
+{
+    // Initialize fields in Machine superclass
+    //
+    _registerAssociations = _registerAssociationsStorage;
+    _xmmGlobalRegisters = _xmmGlobalRegisterStorage;
+    _globalRegisterNumberToRealRegisterMap = _globalRegisterNumberToRealRegisterMapStorage;
+
+    // Initialize register limits
+    //
+    _firstGPR = TR::RealRegister::eax;
+    _lastGPR = TR::RealRegister::r15;
+    _lastAssignableGPR = TR::RealRegister::r15;
+    _last8BitGPR = TR::RealRegister::r15;
+    _numAssignableGPRs = AMD64_NUM_GPR;
+
+    _firstXMMR = TR::RealRegister::xmm0;
+
+    static const char *enableAVX512ExtendedRegisters = feGetEnv("TR_EnableAVX512ExtendedRegisters");
+    if (enableAVX512ExtendedRegisters && cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_X86_AVX512F)) {
+        // AVX-512 extended registers have not been created yet.  Use xmm15 until then.
+        //
+        _lastXMMR = TR::RealRegister::xmm15;
+        _lastAssignableXMMR = TR::RealRegister::xmm15;
+    } else {
+        _lastXMMR = TR::RealRegister::xmm15;
+        _lastAssignableXMMR = TR::RealRegister::xmm15;
+    }
+    _numAssignableXMMRs = static_cast<uint8_t>(_lastAssignableXMMR - _firstXMMR);
+
+    _firstVMR = TR::RealRegister::k0;
+    _lastVMR = TR::RealRegister::k7;
+    _lastAssignableVMR = TR::RealRegister::k7;
+    _numAssignableVMRs = static_cast<uint8_t>(_lastAssignableVMR - _firstVMR);
+
+    if (TR::Machine::enableNewPickRegister()) {
+        _numGlobalGPRs = AMD64_MAX_GLOBAL_GPRS - TR::Machine::numGPRRegsWithheld(cg);
+        _numGlobal8BitGPRs = AMD64_MAX_8BIT_GLOBAL_GPRS - TR::Machine::numRegsWithheld(cg);
+        _numGlobalFPRs = AMD64_MAX_GLOBAL_FPRS - TR::Machine::numRegsWithheld(cg);
+    } else {
+        _numGlobalGPRs = 8;
+        _numGlobal8BitGPRs = 8;
+        _numGlobalFPRs = 8;
+    }
+}
+
+void OMR::X86::AMD64::Machine::initialize() { self()->OMR::X86::Machine::initialize(); }
 
 uint8_t OMR::X86::AMD64::Machine::numGPRRegsWithheld(TR::CodeGenerator *cg)
 {

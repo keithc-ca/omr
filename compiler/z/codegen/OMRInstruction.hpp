@@ -83,13 +83,14 @@ protected:
 
 public:
     //  Register Dependency Routines
-    TR::RegisterDependencyConditions *getDependencyConditions() { return _conditions; }
+    OMR_FINAL TR::RegisterDependencyConditions *getDependencyConditions() { return _conditions; }
 
-    TR::RegisterDependencyConditions *setDependencyConditions(TR::RegisterDependencyConditions *cond);
-    TR::RegisterDependencyConditions *setDependencyConditionsNoBookKeeping(TR::RegisterDependencyConditions *cond);
-    TR::RegisterDependencyConditions *updateDependencyConditions(TR::RegisterDependencyConditions *cond);
+    OMR_FINAL TR::RegisterDependencyConditions *setDependencyConditions(TR::RegisterDependencyConditions *cond);
+    OMR_FINAL TR::RegisterDependencyConditions *setDependencyConditionsNoBookKeeping(
+        TR::RegisterDependencyConditions *cond);
+    OMR_FINAL TR::RegisterDependencyConditions *updateDependencyConditions(TR::RegisterDependencyConditions *cond);
 
-    void resetDependencyConditions(TR::RegisterDependencyConditions *cond = NULL) { _conditions = cond; }
+    OMR_FINAL void resetDependencyConditions(TR::RegisterDependencyConditions *cond = NULL) { _conditions = cond; }
 
     TR::Register *tgtRegArrElem(int32_t i);
     TR::Register *srcRegArrElem(int32_t i);

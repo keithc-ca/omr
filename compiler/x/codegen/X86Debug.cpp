@@ -225,8 +225,6 @@ void TR_Debug::printDependencyConditions(OMR::Logger *log, TR::RegisterDependenc
             len = snprintf(cursor, remainingSize, "NoReg");
         } else if (regDep->isByteReg()) {
             len = snprintf(cursor, remainingSize, "ByteReg");
-        } else if (regDep->isBestFreeReg()) {
-            len = snprintf(cursor, remainingSize, "BestFreeReg");
         } else if (regDep->isSpilledReg()) {
             len = snprintf(cursor, remainingSize, "SpilledReg");
         } else {
@@ -281,8 +279,6 @@ void TR_Debug::dumpDependencyGroup(OMR::Logger *log, TR::RegisterDependencyGroup
             log->prints("NoReg]");
         else if (regDep->isByteReg())
             log->prints("ByteReg]");
-        else if (regDep->isBestFreeReg())
-            log->prints("BestFreeReg]");
         else if (regDep->isSpilledReg())
             log->prints("SpilledReg]");
         else
@@ -1495,7 +1491,7 @@ void TR_Debug::printX86GCRegisterMap(OMR::Logger *log, TR::GCRegisterMap *map)
     log->printf("    slot pushes: %d", ((map->getMap() & _cg->getRegisterMapInfoBitsMask()) >> 16));
 
     log->prints("    registers: {");
-    for (int i = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastAssignableGPR; ++i) {
+    for (int32_t i = machine->getFirstGPR(); i <= machine->getLastAssignableGPR(); ++i) {
         if (map->getMap() & (1 << (i - 1))) // TODO:AMD64: Use the proper mask value
             log->printf("%s ", getName(machine->getRealRegister((TR::RealRegister::RegNum)i)));
     }
@@ -1568,8 +1564,6 @@ const char *TR_Debug::getName(uint32_t realRegisterIndex, TR_RegisterSizes size)
             return "noReg";
         case TR::RealRegister::ByteReg:
             return "byteReg";
-        case TR::RealRegister::BestFreeReg:
-            return "bestFreeReg";
         case TR::RealRegister::SpilledReg:
             return "spilledReg";
         case TR::RealRegister::eax:

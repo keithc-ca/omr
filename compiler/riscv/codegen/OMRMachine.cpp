@@ -109,7 +109,7 @@ TR::RealRegister *OMR::RV::Machine::freeBestRegister(TR::Instruction *currentIns
         }
 
         for (auto i = first; i <= last; i++) {
-            TR::RealRegister *realReg = self()->getRealRegister(i);
+            TR::RealRegister *realReg = getRealRegister(i);
             if (realReg->getState() == TR::RealRegister::Assigned) {
                 candidates[numCandidates++] = realReg->getAssignedRegister();
             }

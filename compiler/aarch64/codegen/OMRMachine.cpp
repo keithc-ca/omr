@@ -233,7 +233,7 @@ TR::RealRegister *OMR::ARM64::Machine::freeBestRegister(TR::Instruction *current
 
         for (int i = first; i <= last; i++) {
             uint32_t iInterfere = interference & (1 << (i - maskI));
-            TR::RealRegister *realReg = self()->getRealRegister(static_cast<TR::RealRegister::RegNum>(i));
+            TR::RealRegister *realReg = getRealRegister(static_cast<TR::RealRegister::RegNum>(i));
             TR::Register *tempReg;
 
             if (realReg->getState() == TR::RealRegister::Assigned) {
@@ -762,7 +762,7 @@ void OMR::ARM64::Machine::spillAllVectorRegisters(TR::Instruction *currentInstru
 
     for (int32_t i = first; i <= last; i++) {
         TR::Register *virtReg = NULL;
-        TR::RealRegister *realReg = self()->getRealRegister(static_cast<TR::RealRegister::RegNum>(i));
+        TR::RealRegister *realReg = getRealRegister(static_cast<TR::RealRegister::RegNum>(i));
 
         if ((realReg->getState() == TR::RealRegister::Assigned) && (virtReg = realReg->getAssignedRegister())
             && (virtReg->getKind() == TR_VRF)) {
@@ -1117,7 +1117,7 @@ TR::RegisterDependencyConditions *OMR::ARM64::Machine::createCondForLiveAndSpill
     // it is space conscious
     //
     for (i = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastAssignableFPR; i++) {
-        TR::RealRegister *realReg = self()->getRealRegister(static_cast<TR::RealRegister::RegNum>(i));
+        TR::RealRegister *realReg = getRealRegister(static_cast<TR::RealRegister::RegNum>(i));
 
         TR_ASSERT(realReg->getState() == TR::RealRegister::Assigned || realReg->getState() == TR::RealRegister::Free
                 || realReg->getState() == TR::RealRegister::Locked,
@@ -1134,7 +1134,7 @@ TR::RegisterDependencyConditions *OMR::ARM64::Machine::createCondForLiveAndSpill
     if (c) {
         deps = RegDeps(0, c, cg());
         for (i = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastAssignableFPR; i++) {
-            TR::RealRegister *realReg = self()->getRealRegister(static_cast<TR::RealRegister::RegNum>(i));
+            TR::RealRegister *realReg = getRealRegister(static_cast<TR::RealRegister::RegNum>(i));
             if (realReg->getState() == TR::RealRegister::Assigned) {
                 TR::Register *virtReg = realReg->getAssignedRegister();
                 TR_ASSERT(!spilledRegisterList

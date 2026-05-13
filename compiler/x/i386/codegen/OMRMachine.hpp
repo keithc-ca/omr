@@ -67,11 +67,9 @@ class OMR_EXTENSIBLE Machine : public OMR::X86::Machine {
     uint32_t _globalRegisterNumberToRealRegisterMapStorage[IA32_MAX_GLOBAL_GPRS + IA32_MAX_GLOBAL_FPRS];
 
 public:
-    Machine(TR::CodeGenerator *cg)
-        : OMR::X86::Machine(IA32_NUM_GPR, IA32_NUM_FPR, cg, _registerAssociationsStorage, IA32_MAX_GLOBAL_GPRS,
-              IA32_MAX_8BIT_GLOBAL_GPRS, IA32_MAX_GLOBAL_FPRS, _xmmGlobalRegisterStorage,
-              _globalRegisterNumberToRealRegisterMapStorage)
-    {}
+    Machine(TR::CodeGenerator *cg);
+
+    void initialize();
 };
 
 }}} // namespace OMR::X86::I386

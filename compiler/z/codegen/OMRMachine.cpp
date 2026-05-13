@@ -1154,8 +1154,8 @@ TR::Register *OMR::Z::Machine::assignBestRegisterPair(TR::Register *regPair, TR:
 
             self()->coerceRegisterAssignment(currInst, firstReg,
                 (TR::RealRegister::RegNum)(toRealRegister(freeRegisterLow)->getRegisterNumber() - 1));
-            freeRegisterHigh = self()->getRealRegister(
-                (TR::RealRegister::RegNum)(toRealRegister(freeRegisterLow)->getRegisterNumber() - 1));
+            freeRegisterHigh
+                = getRealRegister((TR::RealRegister::RegNum)(toRealRegister(freeRegisterLow)->getRegisterNumber() - 1));
         } else if (!self()->isLegalOddRegister(freeRegisterLow, DISALLOWBLOCKED, availRegMask)) {
             // No need to check that the EVEN register is legal,
             // because otherwise we would have gone into the other branch.
@@ -1166,7 +1166,7 @@ TR::Register *OMR::Z::Machine::assignBestRegisterPair(TR::Register *regPair, TR:
 
             self()->coerceRegisterAssignment(currInst, lastReg,
                 (TR::RealRegister::RegNum)(toRealRegister(freeRegisterHigh)->getRegisterNumber() + 1));
-            freeRegisterLow = self()->getRealRegister(
+            freeRegisterLow = getRealRegister(
                 (TR::RealRegister::RegNum)(toRealRegister(freeRegisterHigh)->getRegisterNumber() + 1));
         } else if (!self()->isLegalEvenOddPair(freeRegisterHigh, freeRegisterLow, availRegMask)) {
             // We could probably does something a little more  fancy to avoid
@@ -1182,7 +1182,7 @@ TR::Register *OMR::Z::Machine::assignBestRegisterPair(TR::Register *regPair, TR:
 
                 self()->coerceRegisterAssignment(currInst, lastReg,
                     (TR::RealRegister::RegNum)(toRealRegister(freeRegisterHigh)->getRegisterNumber() + 1));
-                freeRegisterLow = self()->getRealRegister(
+                freeRegisterLow = getRealRegister(
                     (TR::RealRegister::RegNum)(toRealRegister(freeRegisterHigh)->getRegisterNumber() + 1));
             } else if (self()->isLegalOddRegister(freeRegisterLow, DISALLOWBLOCKED, availRegMask)) {
                 if (lastReg) {
@@ -1191,7 +1191,7 @@ TR::Register *OMR::Z::Machine::assignBestRegisterPair(TR::Register *regPair, TR:
 
                 self()->coerceRegisterAssignment(currInst, firstReg,
                     (TR::RealRegister::RegNum)(toRealRegister(freeRegisterLow)->getRegisterNumber() - 1));
-                freeRegisterHigh = self()->getRealRegister(
+                freeRegisterHigh = getRealRegister(
                     (TR::RealRegister::RegNum)(toRealRegister(freeRegisterLow)->getRegisterNumber() - 1));
             } else {
                 TR::RealRegister *tfreeRegisterHigh = NULL;
@@ -2100,7 +2100,7 @@ uint64_t OMR::Z::Machine::constructFreeRegBitVector(TR::Instruction *currentInst
     int32_t cnt = 1;
 
     for (int32_t i = first; i <= last; i++) {
-        TR::RealRegister *realReg = self()->getRealRegister(cnt + 1);
+        TR::RealRegister *realReg = getRealRegister(cnt + 1);
 
         if (realReg->getState() == TR::RealRegister::Free && !currentInstruction->usesRegister(realReg)
             && (realReg->getHasBeenAssignedInMethod() || !linkage->getPreserved((TR::RealRegister::RegNum)(cnt + 1)))) {
@@ -2122,7 +2122,7 @@ TR::RealRegister *OMR::Z::Machine::findRegNotUsedInInstruction(TR::Instruction *
     TR::RealRegister *spill = NULL;
 
     for (int32_t i = first; i <= last, spill == NULL; i++) {
-        TR::RealRegister *realReg = self()->getRealRegister((TR::RealRegister::RegNum)i);
+        TR::RealRegister *realReg = getRealRegister((TR::RealRegister::RegNum)i);
         if (realReg->getState() != TR::RealRegister::Locked && !currentInstruction->usesRegister(realReg)) {
             spill = realReg;
         }
@@ -3217,7 +3217,7 @@ int32_t OMR::Z::Machine::addGlobalReg(TR::RealRegister::RegNum reg, int32_t tabl
 {
     if (reg == TR::RealRegister::NoReg)
         return tableIndex;
-    if (self()->getRealRegister(reg)->getState() == TR::RealRegister::Locked)
+    if (getRealRegister(reg)->getState() == TR::RealRegister::Locked)
         return tableIndex;
     for (int32_t i = 0; i < tableIndex; i++)
         if (_globalRegisterNumberToRealRegisterMap[i] == reg)
@@ -3239,7 +3239,7 @@ int32_t OMR::Z::Machine::addGlobalRegLater(TR::RealRegister::RegNum reg, int32_t
 {
     if (reg == TR::RealRegister::NoReg)
         return tableIndex;
-    if (self()->getRealRegister(reg)->getState() == TR::RealRegister::Locked)
+    if (getRealRegister(reg)->getState() == TR::RealRegister::Locked)
         return tableIndex;
     for (int32_t i = 0; i < tableIndex; i++)
         if (_globalRegisterNumberToRealRegisterMap[i] == reg) {
@@ -3738,7 +3738,7 @@ TR::RegisterDependencyConditions *OMR::Z::Machine::createCondForLiveAndSpilledGP
     TR::Compilation *comp = cg()->comp();
     for (i = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastVRF;
          i = ((i == TR::RealRegister::LastAssignableGPR) ? TR::RealRegister::FirstVRF : i + 1)) {
-        TR::RealRegister *realReg = self()->getRealRegister(i);
+        TR::RealRegister *realReg = getRealRegister(i);
 
         TR_ASSERT(realReg->getState() == TR::RealRegister::Assigned || realReg->getState() == TR::RealRegister::Free
                 || realReg->getState() == TR::RealRegister::Locked,
@@ -3757,7 +3757,7 @@ TR::RegisterDependencyConditions *OMR::Z::Machine::createCondForLiveAndSpilledGP
             TR::RegisterDependencyConditions(0, c, cg());
         for (i = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastVRF;
              i = ((i == TR::RealRegister::LastAssignableGPR) ? TR::RealRegister::FirstVRF : i + 1)) {
-            TR::RealRegister *realReg = self()->getRealRegister(i);
+            TR::RealRegister *realReg = getRealRegister(i);
             if (realReg->getState() == TR::RealRegister::Assigned) {
                 TR::Register *virtReg = realReg->getAssignedRegister();
                 deps->addPostCondition(virtReg, realReg->getRegisterNumber());

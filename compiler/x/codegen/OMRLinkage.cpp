@@ -504,6 +504,7 @@ void OMR::X86::Linkage::associatePreservedRegisters(TR::RegisterDependencyCondit
 {
     TR::Register *vmThreadReg = self()->cg()->getVMThreadRegister();
     TR_LiveRegisters *liveRegisters = self()->cg()->getLiveRegisters(TR_GPR);
+    TR::Machine *machine = self()->machine();
 
     for (TR_LiveRegisterInfo *liveReg = liveRegisters->getFirstLiveRegister(); liveReg; liveReg = liveReg->getNext()) {
         TR::Register *virtReg = liveReg->getRegister();
@@ -518,11 +519,10 @@ void OMR::X86::Linkage::associatePreservedRegisters(TR::RegisterDependencyCondit
         // Search all registers for the best one to associate with virtReg
         //
         TR::RealRegister::RegNum bestReal = TR::RealRegister::NoReg;
-        for (int realReg = TR::RealRegister::LastAssignableGPR; realReg >= TR::RealRegister::FirstGPR; realReg--) {
+        for (int32_t realReg = machine->getLastAssignableGPR(); realReg >= machine->getFirstGPR(); realReg--) {
             // Can't use locked regs
             //
-            if (self()->machine()->getRealRegister((TR::RealRegister::RegNum)realReg)->getState()
-                == TR::RealRegister::Locked)
+            if (machine->getRealRegister((TR::RealRegister::RegNum)realReg)->getState() == TR::RealRegister::Locked)
                 continue;
 
             // Volatile regs are no good for virtuals that live across a call
@@ -530,12 +530,12 @@ void OMR::X86::Linkage::associatePreservedRegisters(TR::RegisterDependencyCondit
             if (!self()->getProperties().isPreservedRegister((TR::RealRegister::RegNum)realReg))
                 continue;
 
-            if (self()->machine()->getVirtualAssociatedWithReal((TR::RealRegister::RegNum)realReg) == virtReg) {
+            if (machine->getVirtualAssociatedWithReal((TR::RealRegister::RegNum)realReg) == virtReg) {
                 // virtReg is already associated with a preserved realReg, so obviously that's the best choice
                 //
                 bestReal = (TR::RealRegister::RegNum)realReg;
                 break;
-            } else if (self()->machine()->getVirtualAssociatedWithReal((TR::RealRegister::RegNum)realReg) == NULL) {
+            } else if (machine->getVirtualAssociatedWithReal((TR::RealRegister::RegNum)realReg) == NULL) {
                 // realReg isn't associated with anything yet so it's a good choice,
                 // but keep looking in case we find a better choice.
                 //
@@ -547,10 +547,10 @@ void OMR::X86::Linkage::associatePreservedRegisters(TR::RegisterDependencyCondit
             // There are no more preserved regs to associate, so we're done.
             //
             break;
-        } else if (self()->machine()->getVirtualAssociatedWithReal(bestReal) == virtReg) {
+        } else if (machine->getVirtualAssociatedWithReal(bestReal) == virtReg) {
             // virtReg is already associated; do nothing
         } else {
-            self()->machine()->setVirtualAssociatedWithReal(bestReal, virtReg);
+            machine->setVirtualAssociatedWithReal(bestReal, virtReg);
         }
     }
 }

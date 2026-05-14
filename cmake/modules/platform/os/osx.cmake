@@ -30,8 +30,8 @@ list(APPEND OMR_PLATFORM_DEFINITIONS
 list(APPEND TR_COMPILE_DEFINITIONS -DSUPPORTS_THREAD_LOCAL -DOSX)
 
 if(OMR_ENV_DATA64 AND NOT OMR_ARCH_AARCH64)
-	# Set page zero size to 4KB for mapping memory below 4GB.
+	# Set page zero size to 16KB for mapping memory below 4GB.
 	list(APPEND OMR_PLATFORM_EXE_LINKER_OPTIONS
-		-pagezero_size 0x1000
+		-pagezero_size 0x4000
 	)
 endif()

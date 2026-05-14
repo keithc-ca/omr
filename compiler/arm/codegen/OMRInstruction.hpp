@@ -105,7 +105,7 @@ public:
 
     virtual bool isLabel() { return _opcode.getOpCodeValue() == TR::InstOpCode::label; }
 
-    OMR_FINAL TR::RegisterDependencyConditions *getDependencyConditions() { return _conditions; }
+    virtual TR::RegisterDependencyConditions *getDependencyConditions() { return _conditions; }
 
     OMR_FINAL TR::RegisterDependencyConditions *setDependencyConditions(TR::RegisterDependencyConditions *cond)
     {

@@ -95,7 +95,7 @@ public:
 
     virtual bool setsCountRegister();
 
-    OMR_FINAL TR::RegisterDependencyConditions *getDependencyConditions() { return _conditions; }
+    virtual TR::RegisterDependencyConditions *getDependencyConditions() { return _conditions; }
 
     OMR_FINAL TR::RegisterDependencyConditions *setDependencyConditions(TR::RegisterDependencyConditions *cond)
     {

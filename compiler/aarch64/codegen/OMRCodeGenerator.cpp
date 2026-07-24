@@ -81,9 +81,12 @@ void OMR::ARM64::CodeGenerator::initialize()
     cg->setLastGlobalGPR(_numGPR - 1);
     cg->setLastGlobalFPR(_numGPR + _numFPR - 1);
 
-    // Use the same registers for FPR and VRF
-    cg->setFirstGlobalVRF(self()->getFirstGlobalFPR());
-    cg->setLastGlobalVRF(self()->getLastGlobalFPR());
+    static const bool enableVectorGRA = (feGetEnv("TR_enableVectorGRA") != NULL);
+    if (enableVectorGRA) {
+        // Use the same registers for FPR and VRF
+        cg->setFirstGlobalVRF(self()->getFirstGlobalFPR());
+        cg->setLastGlobalVRF(self()->getLastGlobalFPR());
+    }
 
     cg->getLinkage()->initARM64RealRegisterLinkage();
     cg->setSupportsGlRegDeps();
